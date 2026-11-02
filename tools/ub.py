@@ -4,6 +4,7 @@
                                             탭5 창은 일련번호가 있을 때 kiosk.sh) → 설정 한눈에(/setup)를 열고 다음 할 일(wideeye guide next)을 찍는다
     setup <명령> …                           AI 와 함께 설정(tools/setup_cli.py — 차례는 setup guide, 안내서 SETUP.md)
     guide <명령> …                           설정 길(tools/guide_cli.py — next · check · confirm · profile · status · marker)
+    tab5 flash|restore …                    탭5 에 WideEye 펌웨어 굽기 · 백업 되돌리기(tools/tab5_cli.py — --yes 가 없으면 확인만)
     uninstall                               작업을 내리고 plist 를 ~/Library/LaunchAgents/_disabled/ 로(자료 폴더는 남긴다)
     start | stop | restart [engine|menubar|display|all]
     status                                  떠 있는지 · 건수
@@ -463,6 +464,8 @@ def parser() -> argparse.ArgumentParser:
     sub.add_parser("migrate", help="옛 config/ 옮기기 — tools/migrate.py 의 인자")
     sub.add_parser("setup", help="AI 와 함께 설정 — urgentboard setup guide")
     sub.add_parser("guide", help="설정 길 — wideeye guide next")
+    t = sub.add_parser("tab5", help="탭5 에 펌웨어 굽기 · 되돌리기 — tools/tab5_cli.py")
+    t.add_argument("rest", nargs=argparse.REMAINDER)
     return ap
 
 
@@ -477,6 +480,9 @@ def main(argv: list[str] | None = None) -> int:
     if argv[:1] == ["guide"]:
         from tools import guide_cli
         return guide_cli.main(argv[1:])
+    if argv[:1] == ["tab5"]:
+        from tools import tab5_cli
+        return tab5_cli.main(argv[1:])
     a = parser().parse_args(argv)
     ctx = Ctx()
     if a.cmd == "install":

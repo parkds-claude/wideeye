@@ -1,0 +1,6 @@
+dependencies:
+  # 5.5.4 하나로 고정: 띠 디코드 부품의 패치(J6~J9)가 그 판의 IDF 내부 동작에 맞춰져 있다(components/jpeg_decode_enhanced/PATCHES.md)
+  idf: '==5.5.4'
+  # 기기에서 검증된 조합으로 고정. 풀지 말 것 — '*' 로 두면 새로 받을 때마다 달라진다(dependencies.lock 도 함께 git 에 둔다 — TB-D7)
+  m5stack/m5unified: '0.2.23'
+  m5stack/m5gfx: '0.2.30'

@@ -52,11 +52,13 @@ def test_next_step_is_deterministic_and_respects_needs_and_skip(rm):
     assert guide.next_step(rm, failed).id == "hello"                                 # 안 된 단계는 넘어가지 않는다
     assert p.steps == {}                                                              # record 는 받은 기록을 고치지 않는다
 
-    # 문자 · 탭5 꽂음: 탭5 프로그램은 아직 공개 전이라 탭5 단계 셋(굽기 · 잇기 · 첫 알림)을 모두 건너뛴다(준비 중 — 마지막 검토 I1)
-    seen, _ = walk(rm, fresh(rm, messengers=["sms"], iphone="yes", tab5="plugged", ai="a", admin="yes"))
+    # 문자 · 탭5 꽂음, 탭5 프로그램이 공개 전이면(1부 — v0.1.0) 탭5 단계 셋(굽기 · 잇기 · 첫 알림)을 모두 건너뛴다(준비 중 — 마지막 검토 I1)
+    unpublished = {"firmware_public": False, "healthz": 200}
+    seen, _ = walk(rm, fresh(rm, messengers=["sms"], iphone="yes", tab5="plugged", ai="a", admin="yes"), facts=unpublished)
     assert seen == ["hello", "install", "permit-messages", "link-sms", "try", "me", "boxes", "criteria", "extras"]
     for sid in ("tab5-flash", "tab5-show", "try-tab5"):
-        assert "준비 중" in guide.skip_reason(rm.step(sid), fresh(rm, tab5="plugged")), sid
+        assert "준비 중" in guide.skip_reason(rm.step(sid), fresh(rm, tab5="plugged"), unpublished), sid
+    assert guide.FACTS["firmware_public"] is True                                     # v0.2.0 부터 공개 — 기본 길에 탭5 단계가 들어온다
     seen, _ = walk(rm, fresh(rm, messengers=["sms"], tab5="plugged"), facts={"firmware_public": True, "healthz": 200})
     assert seen.index("try") < seen.index("tab5-flash") < seen.index("tab5-show") < seen.index("try-tab5")  # 공개된 뒤에는 셋 다 길에 들어온다
 
@@ -238,7 +240,7 @@ def test_every_step_in_the_roadmap_has_a_known_checker_and_known_needs(rm):
 
 def test_every_command_in_the_roadmap_exists(rm, capsys):
     """run · after · 갈림길의 then 이 부르는 것은 모두 실제 `wideeye` 하위 명령이다(어느 AI 든 그대로 따라 한다)."""
-    from tools import setup_cli, ub
+    from tools import setup_cli, tab5_cli, ub
     lines = [(s.id, c) for s in rm.steps for c in (*s.run, *s.after)]
     lines += [(s.id, b["then"]) for s in rm.steps for b in s.stuck if b.get("then", "").startswith("wideeye ")]
     assert lines
@@ -246,12 +248,14 @@ def test_every_command_in_the_roadmap_exists(rm, capsys):
         words = shlex.split(line)
         assert words[0] == "wideeye" and len(words) > 1, (sid, line)
         args = words[1:]
-        assert args[:2] != ["tab5", "flash"], (sid, line)                                    # 굽기 명령은 2부
         if args[0] == "guide":
             assert len(args) > 1 and args[1] in guide.GUIDE_COMMANDS, (sid, line)
             continue
         if args[0] == "setup":
             setup_cli.parser().parse_args(args[1:])                                              # 틀리면 SystemExit
+            continue
+        if args[0] == "tab5":
+            tab5_cli.parser().parse_args(args[1:])                                               # 굽기 명령(v0.2.0 — FL-D5)
             continue
         with pytest.raises(SystemExit) as e:
             ub.main([*args, "--help"])

@@ -279,7 +279,8 @@ def test_profile_rejects_unknown_keys_and_values(tmp_path):
     assert rc == 0 and "messengers=sms,gmail" in text and "tab5=later" in text and "iphone" in text
 
 
-def test_status_says_every_step_and_why_it_is_skipped(tmp_path):
+def test_status_says_every_step_and_why_it_is_skipped(tmp_path, monkeypatch):
+    monkeypatch.setitem(guide.FACTS, "firmware_public", False)          # 공개 전(1부)의 건너뛰는 까닭이 보이는지
     ctx, eng, out = make(tmp_path)
     save(ctx, profile={**FULL_PROFILE, "tab5": "plugged"}, consent=consent(), steps=ok("hello", "install"))
     rc, text = run(ctx, out, "status")

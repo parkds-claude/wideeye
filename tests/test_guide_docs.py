@@ -26,7 +26,7 @@ PUBLIC_DIR = ROOT / "public" if (ROOT / "public").is_dir() else ROOT
 PUBLIC_AGENTS = PUBLIC_DIR / "AGENTS.md"
 PUBLIC_README = PUBLIC_DIR / "README.md"
 CLI_SOURCES = (ROOT / "tools" / "guide_cli.py", ROOT / "urgent_board" / "guide_checks.py")    # 사람에게 건네는 글이 든 코드
-INSTALL_LINE = "curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.1.0/install/wideeye-install.sh | sh"    # 결정 R2 — 작업 8 의 설치 입구
+INSTALL_LINE = "curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.2.0/install/wideeye-install.sh | sh"    # 결정 R2 — 작업 8 의 설치 입구
 FIRST_RULE = "길 명령의 출력만 따라 주세요"
 PASTE_START, PASTE_END = "<!-- 붙여넣기: 시작", "<!-- 붙여넣기: 끝"
 DESIGN_WORDS = ("엔진", "수집기", "출처", "판정", "TCC", "launchd", "plist", "venv", "api_hash", "토큰", "일련번호", "펌웨어", "서버")
@@ -180,7 +180,7 @@ def _commands(text: str) -> tuple[set[tuple[str, ...]], list[str]]:
 def check_command(line: str) -> None:
     """채울 자리 없는 `wideeye …` 한 줄을 실제 파서로 읽는다 — 틀리면 SystemExit(2). --help 를 붙여 보는 꼴은 모르는 선택지를 놓친다
     (`wideeye doctor --bundel x` 가 0 으로 끝났다 — 검토 7)."""
-    from tools import guide_cli, setup_cli, ub
+    from tools import guide_cli, setup_cli, tab5_cli, ub
     args = shlex.split(line)
     assert args[0] == "wideeye" and len(args) > 1, line
     rest = args[1:]
@@ -188,6 +188,8 @@ def check_command(line: str) -> None:
         guide_cli.parser().parse_args(rest[1:])
     elif rest[0] == "setup":
         setup_cli.parser().parse_args(rest[1:])
+    elif rest[0] == "tab5":
+        tab5_cli.parser().parse_args(rest[1:])
     else:
         ub.parser().parse_args(rest)
 
@@ -203,7 +205,8 @@ def test_command_checker_rejects_wrong_arguments(line, capsys):
 
 def test_command_checker_accepts_real_commands(capsys):
     for line in ("wideeye open settings", "wideeye restart engine", "wideeye doctor --bundle x.zip", "wideeye guide next --for-chat",
-                 "wideeye setup who --unsorted --limit 5", "wideeye install --no-open", "wideeye guide confirm try-tab5 yes"):
+                 "wideeye setup who --unsorted --limit 5", "wideeye install --no-open", "wideeye guide confirm try-tab5 yes",
+                 "wideeye tab5 flash", "wideeye tab5 flash --yes", "wideeye tab5 restore x.bin --yes"):
         check_command(line)
 
 

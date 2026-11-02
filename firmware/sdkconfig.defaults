@@ -1,0 +1,41 @@
+# M5Stack Tab5 (ESP32-P4NRW32: 16MB Flash / 32MB PSRAM) — WideEye 현황판 펌웨어
+# Wi-Fi(esp_hosted)는 쓰지 않는다(MN-D2). USB 호스트(USB-A)도 쓰지 않는다 — 그림은 USB-C(USB-Serial/JTAG)로 온다.
+CONFIG_IDF_TARGET="esp32p4"
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=y
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+CONFIG_PARTITION_TABLE_OFFSET=0x10000
+
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_360=y
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+CONFIG_FREERTOS_HZ=1000
+
+# PSRAM (M5GFX 의 Tab5 지원은 200MHz 필수)
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_HEX=y
+CONFIG_SPIRAM_SPEED_200M=y
+CONFIG_IDF_EXPERIMENTAL_FEATURES=y
+CONFIG_SPIRAM_XIP_FROM_PSRAM=y
+CONFIG_CACHE_L2_CACHE_256KB=y
+CONFIG_CACHE_L2_CACHE_LINE_128B=y
+
+# Tab5 의 ESP32-P4 는 rev v1.x (v3.x 와 비호환)
+CONFIG_ESP32P4_SELECTS_REV_LESS_V3=y
+CONFIG_ESP32P4_REV_MIN_100=y
+
+# 큰 범위의 캐시 내보내기(C2M)를 128KB 씩 끊어 한다 — 한 번에 하면 그동안 인터럽트가 막혀 받기(USB-C 직렬)가 밀린다
+CONFIG_ESP_MM_CACHE_MSYNC_C2M_CHUNKED_OPS=y
+
+# 콘솔은 USB-C(USB-Serial/JTAG)만 쓴다. 기본값(UART0 주 + USB 보조)은 printf 가 115200bps UART 에 묶여
+# 화면 찍기(base64 17만 자)에 15초가 걸리고 그동안 그림이 멈춘다(2026-10-12 실측). USB 만 쓰면 받는 쪽이 없을 때는 기다리지 않는다.
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+
+# 화면 교체를 주사 인터럽트가 도는 코어에서 한다(MN-D16 — esp_ipc 로 건너간다). 그 함수는 esp_lcd 의 draw_bitmap(안에서 캐시 한 줄 내보내기)을
+# 부른다 — 기본값 1024바이트로는 빠듯해 넉넉히 잡는다(코어마다 한 개, 내부 RAM 2KB 더). 실제 여유는 시리얼 `tasks` 의 ipc0/ipc1.
+CONFIG_ESP_IPC_TASK_STACK_SIZE=2048
+
+# FL-D3 재현 빌드 — 어느 폴더 · 어느 맥에서 빌드해도 같은 바이너리가 나온다(빌드 시각 · 폴더 경로를 넣지 않는다). 릴리스 이미지의 지문을
+# 누구나 소스에서 다시 만들어 대조할 수 있게. 판 이름은 version.txt(없으면 ESP-IDF 가 이 저장소의 `git describe` 를 넣는다).
+CONFIG_APP_REPRODUCIBLE_BUILD=y

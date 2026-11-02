@@ -7,6 +7,8 @@ cryptography<49
 # 알려진 취약점을 고친 판 이상(pip-audit 2026-11-02 — 보안 점검). 이 셋만 --exclude-newer-package 로 더 새 판을 허용하고(certifi ·
 # opentelemetry-api 는 2026-10-19 = 그날에서 2주 전, pyasn1 은 고친 판이 2026-10-27 에 나와 2026-10-28 — 2주 기다림의 예외, 보안 고침이라서)
 # 나머지는 2026-10-05 그대로 둔다. cryptography 의 고친 판(49)은 위 까닭으로 쓰지 않는다(취약한 서명 기능을 WideEye 는 부르지 않는다).
+# 2026-11-03 esptool 5.4.0 을 더한 뒤 다시 본 pip-audit: cryptography 48.0.1 의 세 건(CVE-2026-69247 PKCS#7 복호화 · 69248 이름 제약 ·
+# 69249 인증서 경로)만 남았다. esptool 의 굽기 · 읽기 · MAC 은 이 기능을 부르지 않는다(espsecure 의 서명 · 암호화는 WideEye 가 부르지 않는다).
 certifi>=2026.10.18
 pyasn1>=0.6.5
 opentelemetry-api>=1.45.1

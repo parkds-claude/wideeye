@@ -133,11 +133,12 @@ NAMES = {"home": home, "settings": settings_file, "state": state_dir, "db": db_p
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 1 or argv[0] not in (*NAMES, "code", "port"):
-        print("쓰기: python -m urgent_board.paths " + "|".join((*NAMES, "code", "port")), file=sys.stderr)
+    if len(argv) != 1 or argv[0] not in (*NAMES, "code", "port", "tab5_serial"):
+        print("쓰기: python -m urgent_board.paths " + "|".join((*NAMES, "code", "port", "tab5_serial")), file=sys.stderr)
         return 2
     name = argv[0]
-    print(CODE_ROOT if name == "code" else read_light()["port"] if name == "port" else NAMES[name]())
+    # tab5_serial — 설정의 display.tab5_usb_serial(없으면 빈 줄). tools/kiosk.sh 가 탭5 도구(firmware/tools/mon_ctl.py)에 --serial 로 넘긴다(TB-D5)
+    print(CODE_ROOT if name == "code" else read_light()["port"] if name == "port" else read_light()["tab5_usb_serial"] if name == "tab5_serial" else NAMES[name]())
     return 0
 
 

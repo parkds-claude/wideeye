@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "tag": "v0.2.0",
+  "file": "wideeye-tab5-v0.2.0.bin",
+  "offset": "0x2000",
+  "size": 968544,
+  "sha256": "92f22213dfa9d9a7b61b163048aff805dd1a3847693a800841be6133a949e8f2",
+  "chip": "esp32p4",
+  "chip_rev": [
+    100,
+    199
+  ],
+  "flash_size": "16MB",
+  "idf": "5.5.4",
+  "esptool": "5.4.0"
+}

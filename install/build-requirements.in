@@ -1,4 +1,4 @@
-# 휠이 없어 소스로 짓는 부품(pyaes — telethon 이 쓴다, 순수 파이썬)을 지을 때 쓰는 도구. install/requirements-build.lock 의 입력.
+# 휠이 없어 소스로 짓는 부품(pyaes — telethon 이 쓴다 · esptool — 탭5 굽기, 둘 다 순수 파이썬)을 지을 때 쓰는 도구. install/requirements-build.lock 의 입력.
 # 설치는 이 잠금을 --build-constraints 로 넘겨 짓는 도구까지 지문으로 확인한다(넘기지 않으면 uv 는 확인 없이 받는다 — 2026-10-19 실측).
 setuptools>=40.8.0
 # pip-audit 2026-11-02: 84.0.0 에 GHSA-xmj3-9gf7-h52w(윈도우에서만 — 옛 휠 설치 길) — 맥 전용이라 해당 없음, 그대로 둔다.

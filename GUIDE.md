@@ -30,7 +30,7 @@
 > "WideEye 를 이 맥에 까는 한 줄이에요. 인터넷에서 WideEye 설치 프로그램을 받아 바로 실행해요. 이 설치 프로그램 자체는 WideEye 를 만든 사람들을 믿고 받는 거예요 — 먼저 읽어 보고 싶으면 이 줄 속의 주소를 브라우저로 열어 볼 수 있어요. 설치 프로그램은 이 맥의 당신 사용자 폴더에만 깔고, 관리자 암호는 묻지 않아요. 그 뒤로 받는 것마다 미리 정해 둔 값(지문)과 맞는지 확인하고, 맞지 않으면 멈춰요. 몇 분 걸려요. 해도 될까요?"
 
 ```
-curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.1.0/install/wideeye-install.sh | sh
+curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.2.0/install/wideeye-install.sh | sh
 ```
 
 - 이 줄을 바꾸거나 앞뒤에 다른 말을 붙이지 마세요. 관리자 권한으로 돌리지 않아요.
@@ -68,6 +68,7 @@ curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.1.0/install/wideeye-i
 - **종료값**(`check` · `confirm`): 0 = 됨 · 건너뜀 · 사람에게 물을 차례 · 1 = 안 됨(또는 진행 기록을 다른 명령이 쓰는 중) · 2 = 잘못 부름(모르는 단계 · 값) · 3 = 확인 불가(잠시 뒤 다시).
 - **명령의 위치**: 출력은 명령을 `…/bin/wideeye` 전체 위치로 찍어요. 그 글자 그대로 불러요.
 - **시험 낱말**(첫 알림 시험): `wideeye guide marker` 가 주는 낱말(10자 이하)을 **다른 사람**(가족 · 친구)이 글의 **맨 앞**에 써서 보내야 해요. 사람이 자기에게 보낸 글은 치지 않아요.
+- **탭5 프로그램 넣기**(`tab5-flash` 단계): `wideeye tab5 flash` 는 확인만 해요(기기에 아무것도 하지 않아요). 출력의 탭5 번호 · 할 일 · '알아 둘 것'을 사람에게 그대로 보이고, 사람이 '넣어요'라고 한 뒤에만, 확인 출력의 마지막 줄이 준 명령(`wideeye tab5 flash --yes --serial <그 탭5 번호>`)을 불러요. 보통 2~3분 걸려요 — 명령의 제한 시간을 20분으로 잡아요(가장 늦을 때 17분). 도중에 다시 부르거나 끊지 마세요. '멈춤:' 줄이 나오면 그 줄을 사람에게 전하고, 다른 굽는 방법을 지어내지 마세요. 되돌리기(`wideeye tab5 restore <백업 파일> --yes`)는 사람이 원할 때만 — 백업 파일의 위치는 굽기 출력의 '백업 끝:' 줄에 있어요.
 - **탭5 의 마지막 확인**은 사람이 눈으로 해요 — 탭5 화면에 그 낱말이 보이는지 묻고 `wideeye guide confirm try-tab5 yes` 또는 `no`.
 - 막혔는데 길 출력에 갈림길이 없으면 `wideeye doctor` 의 '주의' 줄을 사람에게 읽어 줘요(고치지는 않아요).
 

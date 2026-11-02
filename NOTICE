@@ -1,7 +1,8 @@
 WideEye — third-party notices
 
 WideEye itself is released under the MIT License (see LICENSE).
-It ships one third-party file and installs third-party Python packages, listed below with their licenses.
+It ships third-party files (a font, and Tab5 firmware parts in firmware/) and installs third-party Python packages,
+listed below with their licenses.
 
 1. Pretendard font (urgent_board/static/fonts/PretendardVariable.woff2)
    License: SIL Open Font License, Version 1.1 — full text in urgent_board/static/fonts/OFL.txt
@@ -9,25 +10,37 @@ It ships one third-party file and installs third-party Python packages, listed b
    Copyright (c) 2021, Kil Hyung-jin (https://github.com/orioncactus/pretendard),
    with Reserved Font Name Pretendard.
 
-2. Python packages (installed from requirements.lock; not included in this repository)
+2. Tab5 firmware (source in firmware/; prebuilt image wideeye-tab5-v<version>.bin in the GitHub releases)
+   The prebuilt image contains ESP-IDF (Apache-2.0, with FreeRTOS MIT, Mbed TLS Apache-2.0, TLSF BSD-3-Clause), the
+   newlib C library and GCC runtime libraries, M5GFX (MIT, with LovyanGFX FreeBSD and Adafruit GFX BSD), M5Unified (MIT),
+   jpeg_decode_enhanced (MIT, in firmware/components/) and glyph pictures drawn with Pretendard (OFL-1.1).
+   Full list and license texts: firmware/THIRD_PARTY_NOTICES.txt (also attached to each release with the image).
+   The flashing tool esptool (GPL-2.0-or-later) is one of the Python packages below; WideEye runs it as a separate program.
+
+3. Python packages (installed from requirements.lock; not included in this repository)
    Each package's license text is installed with the package (its *.dist-info folder).
    name version — license (as declared in the package metadata)
 
+- bitarray 3.11.0 — PSF-2.0
+- bitstring 4.4.0 — MIT
 - blinker 1.9.0 — MIT License
-- certifi 2026.7.22 — MPL-2.0
+- certifi 2026.10.18 — MPL-2.0
 - cffi 2.1.1 — MIT-0
 - charset-normalizer 3.5.2 — MIT
 - click 8.5.0 — BSD-3-Clause
-- cryptography 48.0.1 — Apache-2.0 OR BSD-3-Clause (license read from installed 50.0.2)
+- cryptography 48.0.1 — Apache-2.0 OR BSD-3-Clause
+- esp-pylib 1.1.5 — Apache-2.0
+- esptool 5.4.0 — GPLv2+
 - flask 3.1.3 — BSD-3-Clause
-- google-api-core 2.40.0 — Apache 2.0 (license read from installed 2.42.0)
+- google-api-core 2.40.0 — Apache 2.0
 - google-api-python-client 2.201.0 — Apache 2.0
-- google-auth 2.59.1 — Apache 2.0 (license read from installed 2.62.0)
+- google-auth 2.59.1 — Apache 2.0
 - google-auth-httplib2 0.4.4 — Apache 2.0
 - googleapis-common-protos 1.75.5 — Apache-2.0
-- holidays 0.105 — MIT (license read from installed 0.106)
+- holidays 0.105 — MIT
 - httplib2 0.32.0 — MIT
 - idna 3.20 — BSD-3-Clause
+- intelhex 2.3.0 — BSD
 - itsdangerous 2.2.0 — BSD License
 - jaraco-classes 3.4.0 — MIT License
 - jaraco-context 6.1.2 — MIT
@@ -35,15 +48,18 @@ It ships one third-party file and installs third-party Python packages, listed b
 - jinja2 3.1.6 — BSD License
 - keyring 25.7.0 — MIT
 - korean-datetime 1.0.0 — MIT
+- markdown-it-py 4.2.0 — MIT License
 - markupsafe 3.0.4 — BSD-3-Clause
-- more-itertools 11.1.0 — MIT (license read from installed 11.2.1)
-- opentelemetry-api 1.45.0 — Apache-2.0 (license read from installed 1.45.1)
+- mdurl 0.1.2 — MIT License
+- more-itertools 11.1.0 — MIT
+- opentelemetry-api 1.45.1 — Apache-2.0
 - proto-plus 1.29.0 — Apache 2.0
 - protobuf 7.36.2 — 3-Clause BSD License
 - pyaes 1.6.1 — MIT License
-- pyasn1 0.6.4 — BSD-2-Clause
+- pyasn1 0.6.5 — BSD-2-Clause
 - pyasn1-modules 0.4.2 — BSD
-- pycparser 3.0 — BSD-3-Clause (license read from installed 3.11)
+- pycparser 3.0 — BSD-3-Clause
+- pygments 2.21.0 — BSD-2-Clause
 - pyobjc-core 12.2.2 — MIT
 - pyobjc-framework-cocoa 12.2.2 — MIT
 - pyobjc-framework-webkit 12.2.2 — MIT
@@ -52,16 +68,22 @@ It ships one third-party file and installs third-party Python packages, listed b
 - python-dateutil 2.9.0.post0 — BSD License / Apache Software License
 - python-dotenv 1.2.4 — BSD-3-Clause
 - pyyaml 6.0.3 — MIT
+- reedsolo 1.7.0 — Public Domain
 - requests 2.34.2 — Apache-2.0
+- rich 15.0.0 — MIT
+- rich-click 1.9.9 — MIT License
 - rsa 4.9.1 — Apache-2.0
 - six 1.17.0 — MIT
 - telethon 1.45.0 — MIT
+- tibs 0.5.7 — The MIT License
 - typing-extensions 4.16.0 — PSF-2.0
 - uritemplate 4.2.0 — BSD 3-Clause OR Apache-2.0
 - urllib3 2.8.0 — MIT
+- websockets 17.2 — BSD-3-Clause
 - werkzeug 3.1.9 — BSD-3-Clause
 
    Listed in requirements.lock for other systems only — never installed on macOS:
+- colorama 0.4.6 — only when sys_platform == 'win32'
 - jeepney 0.9.0 — only when sys_platform == 'linux'
 - pywin32-ctypes 0.2.3 — only when sys_platform == 'win32'
 - secretstorage 3.5.0 — only when sys_platform == 'linux'

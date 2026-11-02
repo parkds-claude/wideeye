@@ -13,7 +13,8 @@
 ## 코드를 고치는 개발자(에이전트)라면
 
 - 사람이 설정을 원하는데 코드를 고치려 하고 있다면 위로 돌아가세요.
-- 코드: 파이썬 패키지 `urgent_board/`(받은 글 읽기 · 판정 · 화면 · 설정), 명령 `tools/`(`ub.py` 관리 · `setup_cli.py` 설정 · `guide_cli.py` 설정 길), 실행 `bin/wideeye`.
+- 코드: 파이썬 패키지 `urgent_board/`(받은 글 읽기 · 판정 · 화면 · 설정), 명령 `tools/`(`ub.py` 관리 · `setup_cli.py` 설정 · `guide_cli.py` 설정 길 · `tab5_cli.py` 탭5 굽기), 실행 `bin/wideeye`.
+- 탭5 펌웨어: `firmware/`(ESP-IDF 5.5.4 · 빌드 · 재현 · 굽기는 `firmware/README.md`). 릴리스 이미지의 지문은 `firmware/release.json` 하나에만 — 펌웨어를 바꾸면 `firmware/tools/make_release_image.sh <폴더> --write`.
 - 설정 길: 단계 정의 `urgent_board/roadmap.yaml`(골격 — 사람 말은 쉬운 말로, 화면 이름은 괄호로) · 길 엔진 `urgent_board/guide.py` · 확인기 `urgent_board/guide_checks.py`.
 - 의존 방향(역방향 import 금지): models → config → store → service(collectors · triage · workhours) → web → runtime(run_board.py · tools).
 - 시험: `.venv/bin/python -m pytest -q`. 사람에게 보이는 글은 `tests/test_guide_docs.py` 가 금지 낱말(`tests/forbidden_words.txt`)과 명령 이름을 봅니다.

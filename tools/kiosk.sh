@@ -149,7 +149,7 @@ doctor() {
   else
     warn "launchd 에 올라가 있지 않다 — tools/kiosk.sh 를 실행"
   fi
-  port="$("$DIR/.venv/bin/python" -m urgent_board.paths port 2>/dev/null)"       # 설정 파일의 포트(못 읽으면 기본값)
+  port="$(cd "$DIR" && .venv/bin/python -m urgent_board.paths port 2>/dev/null)"   # 설정 파일의 포트(못 읽으면 기본값). 저장소 폴더에서 — 다른 폴더면 모듈을 못 찾아 기본값이 됐다
   code="$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://127.0.0.1:${port:-0}/healthz" 2>/dev/null)"
   if [ "$code" = "200" ]; then good "현황판 서버가 답한다"; else warn "현황판 서버가 답하지 않는다(창은 '서버를 기다리는 중'을 보이며 기다린다)"; fi
   st="$STATE_DIR/tab5-link.json"                 # 탭5 연결이 30초마다 · 바뀔 때 적는다 — 포트는 열지 않는다(읽기만)
@@ -221,8 +221,11 @@ case "${1:-start}" in
     shift
     SDIR="${TAB5_STATE_DIR:-$STATE_DIR}"                 # 시험은 임시 폴더를 준다(실제 창의 놓기 파일을 건드리지 않게)
     PAUSE="$SDIR/tab5-link.pause"; STATE="$SDIR/tab5-link.json"
-    MONCTL="${TAB5_MONCTL:-$DIR/firmware/tools/mon_ctl.py}"
-    MONCTL_ARGS="${TAB5_MONCTL_ARGS:-}"           # 탭5 도구에 넘길 인자(탭5 가 여러 대일 때 고르는 번호 등)
+    MONCTL="${TAB5_MONCTL:-$DIR/firmware/tools/mon_ctl.py}"   # 탭5 펌웨어와 그 도구는 이 저장소의 firmware/(2026-11-02 앞 판 저장소에서 옮김 — TB-D1)
+    # 탭5 도구에 넘길 인자: 따로 주지 않았으면 설정의 탭5 일련번호(display.tab5_usb_serial)로 고른다. 그것도 없으면 도구가
+    #   꽂힌 Espressif 기기가 하나일 때만 그것을 쓴다(TB-D5 — 예전에는 기기 번호 표의 '--unit 2' 였다)
+    if [ -n "${TAB5_MONCTL_ARGS+x}" ]; then MONCTL_ARGS="$TAB5_MONCTL_ARGS"
+    else ser="$(cd "$DIR" && .venv/bin/python -m urgent_board.paths tab5_serial 2>/dev/null)"; MONCTL_ARGS="${ser:+--serial $ser}"; fi   # 저장소 폴더에서(모듈을 찾게 — 독립 검토 2026-11-02)
     mkdir -p "$SDIR"
     # 창이 포트를 놓았다는 확인을 기다린다(10초까지): 상태 파일의 paused 가 이번 놓기 뒤에 적힌 것이어야 믿는다(낡은 "paused" 를 믿지 않게).
     #   상태 파일이 없거나 그 창이 살아 있지 않으면 기다리지 않는다 — 포트를 쥔 것이 없다

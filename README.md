@@ -5,7 +5,7 @@ You set it up by talking with an AI you already use. Start with [`START.md`](STA
 
 - **macOS only.** Everything runs on your own Mac. There is no WideEye server.
 - **What it can read in this release:** texts, missed calls (with an iPhone) and a few mail and work-chat services — see '이번 판에서 이을 수 있는 것' below. Other messengers are not supported yet.
-- **The Tab5 screen is optional.** WideEye can show the board on an M5Stack Tab5 plugged in by USB-C. The program for the Tab5 is still being prepared and is not part of this release — until then you see the board in your Mac's browser.
+- **The Tab5 screen is optional.** WideEye can show the board on an M5Stack Tab5 plugged in by USB-C. From v0.2.0 the release includes a prebuilt Tab5 program (source in [`firmware/`](firmware/)); the setup guide installs it with one command, after backing up the Tab5's original contents. Tested on one Tab5 (ESP32-P4 chip v1.3, ST7121 display).
 - **Privacy:** what WideEye reads (including your Mac's contacts, to show names instead of numbers) stays in a folder on your Mac. The AI that helps you set up sees your name and mail address, your box names and the names of the people and rooms that contacted you — but not message text unless you allow it each time. Passwords and login codes never go through the AI. An optional summary feature (off by default) sends the text of messages shown on the board, with the sender and room names and the date received, to Claude — together with your box names, keywords and descriptions, the names of not-yet-confirmed work and your 'no task' rule. Details below.
 - **License:** MIT (see [`LICENSE`](LICENSE)). Third-party notices: [`NOTICE`](NOTICE).
 
@@ -50,7 +50,17 @@ You set it up by talking with an AI you already use. Start with [`START.md`](STA
 
 ### 탭5 에 대하여
 
-탭5 에 넣을 WideEye 프로그램은 **아직 준비 중이에요**(이번 판에는 들어 있지 않아요). 그동안은 맥의 브라우저로 봐요 — 설정 길이 탭5 단계를 건너뛰어 줘요. 프로그램이 나오면 같은 길에서 탭5 를 이어요.
+v0.2.0 부터 탭5 에 넣을 WideEye 프로그램이 릴리스에 들어 있어요. 설정 길에서 AI 가 넣어 줘요. 직접 하려면:
+
+1. `wideeye tab5 flash` — 확인만 해요. 어느 탭5 에 무엇을 넣는지 보여 주고, 기기에는 아무것도 하지 않아요.
+2. `wideeye tab5 flash --yes --serial <탭5 번호>` — 실제로 넣어요(2~3분, 도는 동안 선을 뽑지 않아요). 탭5 번호는 1 의 출력에 있어요. 넣기 전에 탭5 의 내용 16MB 를 통째로 이 맥에 백업해요(`~/Library/Application Support/UrgentBoard/tab5-backups/`).
+3. 되돌리기: `wideeye tab5 restore <백업 파일> --yes` — 그 백업을 뜬 때의 내용으로 돌아가요(처음 넣을 때 뜬 백업이면 공장에서 들어 있던 프로그램).
+
+- 넣으면 공장에서 들어 있던 프로그램은 지워져요(백업으로 되돌려요). 다시 넣으면 탭5 의 방향 · 밝기 설정이 처음으로 돌아가요(화면을 톡 친 뒤 '방향' 단추로 다시 맞춰요).
+- 명령이 '탭5 가 답하지 않는다'로 멈추면 USB-C 선을 뽑았다 다시 꽂고 같은 명령을 다시 해요(공장 프로그램으로 되돌린 직후에 한 번 있었어요).
+- 이 프로그램은 칩이 v1 인 탭5(ESP32-P4 v1.x)에서만 돌아요. 다른 칩이면 넣기 전에 멈춰요.
+- 확인을 마친 것은 화면이 ST7121 인 탭5 한 대(칩 v1.3)예요. 탭5 는 만든 때에 따라 화면 부품이 셋(ILI9881C · ST7123 · ST7121)이에요. 프로그램이 쓰는 화면 부품(M5GFX)은 셋을 모두 알아보지만, 다른 둘에서는 아직 시험하지 못했어요. 화면이 안 뜨면 되돌리고 알려 주세요.
+- 받는 파일은 지문(sha256)으로 확인한 뒤에만 넣어요. 소스는 [`firmware/`](firmware/) — 같은 소스에서 누구나 같은 파일을 다시 만들 수 있어요(재현 빌드, [`firmware/README.md`](firmware/README.md)).
 
 ## 무엇을 읽고, 무엇이 밖으로 나가나요
 
@@ -76,6 +86,8 @@ You set it up by talking with an AI you already use. Start with [`START.md`](STA
 | `~/WideEye/bin/wideeye open list` | 전체 목록(원문 열기 · 처리됨) |
 | `~/WideEye/bin/wideeye open settings` | 설정 화면 |
 | `~/WideEye/bin/wideeye doctor` | 무엇이 안 되는지 살펴보기 |
+| `~/WideEye/bin/wideeye tab5 flash` | 탭5 에 WideEye 프로그램 넣기 — 확인만(`--yes` 를 붙이면 실제로) |
+| `~/WideEye/bin/wideeye tab5 restore <백업 파일>` | 탭5 를 넣기 전으로 되돌리기 — 확인만(`--yes` 를 붙이면 실제로) |
 
 ## 코드를 고치는 사람에게
 
@@ -89,4 +101,6 @@ You set it up by talking with an AI you already use. Start with [`START.md`](STA
 - WideEye 는 **MIT 라이선스**예요 — [`LICENSE`](LICENSE).
 - 글꼴 **Pretendard**(길형진, SIL Open Font License 1.1) — `urgent_board/static/fonts/OFL.txt`.
 - 함께 쓰는 파이썬 부품과 그 라이선스는 [`NOTICE`](NOTICE) 에 있어요.
+- 탭5 프로그램은 ESP-IDF(Espressif, Apache-2.0) · M5GFX · M5Unified(M5Stack, MIT) · jpeg_decode_enhanced(Hiroki Kawakami, MIT)를 쓰고, Pretendard 로 그린 글자 그림을 담아요. 굽는 도구는 esptool(Espressif, GPL-2.0-or-later — 따로 된 프로그램으로 불러요). 전문은 [`firmware/THIRD_PARTY_NOTICES.txt`](firmware/THIRD_PARTY_NOTICES.txt).
+- 참고한 프로젝트: nnn112358/Tab5_UVC_Camera — 탭5 에서 하드웨어 JPEG 와 PPA 로 화면을 그리는 길. 출처를 대조해 보니 그 프로젝트와 같은 것은 ESP-IDF 를 쓰는 정해진 꼴뿐이었어요([`firmware/README.md`](firmware/README.md) 의 '들여온 것 · 참고한 것').
 - M5Stack Tab5 는 M5Stack 의 제품이에요. WideEye 는 M5Stack 과 관계가 없어요.

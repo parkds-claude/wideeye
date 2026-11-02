@@ -61,7 +61,7 @@ PROFILE = {
     "admin": ("yes", "no"),
 }
 LIST_KEYS = ("messengers",)
-FACTS = {"firmware_public": False}      # 1부: 탭5 프로그램은 아직 공개 전 — 굽기 단계는 '준비 중'으로 건너뛴다(G11)
+FACTS = {"firmware_public": True}       # v0.2.0(2026-11-03)부터 탭5 프로그램을 릴리스에 싣는다 — 굽기 단계를 연다(G11 · FL-D1). 그 전(1부)은 False
 MESSENGER_SOURCE = {"sms": "imessage", "gmail": "gmail", "teams": "teams", "calls": "calls", "telegram": "telegram"}   # 프로필 → 잇기 확인기가 볼 곳
 CONSENT_STEP = "hello"                  # 이 단계의 사람 확인은 허락 기록(consent)에도 남는다(G8)
 MARKER = "{marker}"                     # 사람 글에서 채우는 자리 — 시험 낱말(try · try-tab5)

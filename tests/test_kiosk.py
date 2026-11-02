@@ -595,3 +595,25 @@ def test_kiosk_knows_the_same_default_prefix_as_launchd():
     from tools import launchd as ld
     sh = (ROOT / "tools" / "kiosk.sh").read_text(encoding="utf-8")
     assert f'DEFAULT_PREFIX="{ld.DEFAULT_PREFIX}"' in sh
+
+
+def test_tab5_tool_gets_the_serial_from_the_settings(tmp_path):
+    """TB-D5(2026-11-02): 탭5 도구는 이 저장소의 firmware/tools/mon_ctl.py 이고, 인자를 따로 주지 않으면 설정의 탭5 일련번호를 --serial 로 받는다.
+    일련번호가 없으면 아무 인자도 주지 않는다(도구가 꽂힌 Espressif 기기가 하나일 때만 그것을 쓴다). 기기 번호 표(--unit)는 없다."""
+    import os
+    import subprocess
+    from urgent_board import settings_doc as sd
+    sh = (ROOT / "tools" / "kiosk.sh").read_text(encoding="utf-8")
+    assert '$DIR/firmware/tools/mon_ctl.py' in sh and "TAB5_MONCTL_ARGS:---unit" not in sh
+    tool = tmp_path / "args_monctl.py"
+    tool.write_text("import sys\nprint('ARGS', sys.argv[1:], flush=True)\n")
+    for serial, want in (("TEST-SER-1", "['--serial', 'TEST-SER-1']"), ("", "[]")):
+        home = tmp_path / ("home-" + (serial or "none")); home.mkdir()
+        d = sd.example(); d.setdefault("display", {})["tab5_usb_serial"] = serial
+        sd.save(home, d, None)
+        state = home / "st"; state.mkdir()
+        env = {k: v for k, v in os.environ.items() if k != "TAB5_MONCTL_ARGS"}
+        env.update(URGENT_BOARD_HOME=str(home), TAB5_STATE_DIR=str(state), TAB5_MONCTL=str(tool))
+        # 저장소 밖 폴더에서 불러도 같아야 한다 — 예전에는 모듈을 못 찾아 일련번호가 조용히 빠졌다(독립 검토 2026-11-02)
+        r = subprocess.run(["sh", str(ROOT / "tools" / "kiosk.sh"), "tab5", "--"], env=env, capture_output=True, text=True, timeout=60, cwd=str(tmp_path))
+        assert r.returncode == 0 and ("ARGS " + want) in r.stdout, (serial, r.stdout + r.stderr)

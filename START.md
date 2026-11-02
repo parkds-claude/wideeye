@@ -142,7 +142,7 @@ ChatGPT · Gemini · Claude 의 대화 화면처럼, 맥에서 일을 직접 하
 2. 탭5 화면이 밝으면 켜져 있는 거예요.
 
 탭5 가 없으면 이 단계는 건너뛰세요.
-탭5 에 넣을 WideEye 프로그램이 아직 준비 중이면 AI 가 알려 줘요. 그동안은 맥 화면으로 봐요.
+설정 길에서 AI 가 탭5 에 WideEye 프로그램을 넣어 줘요. 넣기 전에 탭5 의 원래 내용을 이 맥에 통째로 백업해서, 언제든 되돌릴 수 있어요.
 
 ---
 
@@ -209,7 +209,7 @@ AI 에게 주는 글이라 읽지 않아도 돼요.
 > "WideEye 를 이 맥에 까는 한 줄이에요. 인터넷에서 WideEye 설치 프로그램을 받아 바로 실행해요. 이 설치 프로그램 자체는 WideEye 를 만든 사람들을 믿고 받는 거예요 — 먼저 읽어 보고 싶으면 이 줄 속의 주소를 브라우저로 열어 볼 수 있어요. 설치 프로그램은 이 맥의 당신 사용자 폴더에만 깔고, 관리자 암호는 묻지 않아요. 그 뒤로 받는 것마다 미리 정해 둔 값(지문)과 맞는지 확인하고, 맞지 않으면 멈춰요. 몇 분 걸려요. 해도 될까요?"
 
 ```
-curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.1.0/install/wideeye-install.sh | sh
+curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.2.0/install/wideeye-install.sh | sh
 ```
 
 - 이 줄을 바꾸거나 앞뒤에 다른 말을 붙이지 마세요. 관리자 권한으로 돌리지 않아요.

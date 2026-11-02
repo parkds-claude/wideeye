@@ -10,3 +10,6 @@ python-dotenv>=1.0
 pyobjc-framework-Cocoa>=10.0
 pyobjc-framework-WebKit>=10.0
 pyserial>=3.5
+# 탭5 에 펌웨어를 굽는 도구(wideeye tab5 flash · restore — FL-D2). GPL-2.0-or-later 라서 import 하지 않고 `python -m esptool` 로만 부른다.
+# 휠이 없어 소스로 짓는다(설치기의 PIN_SOURCE_BUILDS). 5.4.0 = --exclude-newer(2026-10-05) 안의 마지막 판.
+esptool==5.4.0

@@ -264,22 +264,27 @@ steps:
   - id: tab5-flash
     title: "탭5 에 WideEye 프로그램 넣기"
     why: "탭5 가 WideEye 화면을 받으려면 탭5 안에 전용 프로그램이 있어야 해요."
-    who: ai
+    tell:
+      - "탭5 에 공장에서 들어 있던 프로그램은 지워져요. 지우기 전에 탭5 의 내용을 통째로 이 맥에 백업해 두고, 그 백업으로 되돌릴 수 있어요."
+      - "이 프로그램은 칩이 v1 인 탭5 에서 돌아요. 확인을 마친 것은 2025년 10월 뒤에 나온 화면(ST7121)의 탭5 한 대예요. 다른 탭5 면 넣기 전에 AI 가 멈추거나, 넣은 뒤 화면이 안 뜰 수 있어요(그때는 되돌려요)."
+    who: both
     needs: [try]
     skip_if:
       - {tab5: [none, later]}
       - {firmware_public: false, say: "탭5 에 넣을 프로그램은 아직 준비 중이에요. 이 단계는 건너뛰어요."}
     do:
       - "탭5 를 USB-C 선으로 이 맥에 꽂아 두어요."
-      - "AI 가 프로그램을 넣는 동안 선을 뽑지 말아요."
-      - "탭5 가 다시 켜지면 AI 에게 알려 줘요."
+      - "AI 가 보여 준 탭5 번호와 할 일을 읽어요. 맞으면 '넣어요'라고 답해요."
+      - "AI 가 넣는 2~3분 동안 선을 뽑지 말아요. 다 되면 AI 가 알려 줘요."
+    run: ["wideeye tab5 flash"]
+    after: ["wideeye tab5 flash --yes --serial <찾은탭5번호>", "wideeye start display"]
     check: tab5_flash
     stuck:
       - when: no_tab5
         say: "맥이 탭5 를 찾지 못했어요. 선을 뽑았다가 다시 꽂아 주세요. 충전만 되는 선이면 다른 선으로 바꿔 주세요."
         then: tab5-flash
       - when: not_flashed
-        say: "탭5 에 아직 WideEye 프로그램이 없어요. AI 가 다시 넣어 볼게요."
+        say: "탭5 에 아직 WideEye 프로그램이 없어요. 넣기 명령의 '멈춤' 줄을 읽고, 멈춘 까닭을 사람에게 전해요."
         then: tab5-flash
 
   - id: tab5-show
