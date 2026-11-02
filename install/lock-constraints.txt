@@ -1,0 +1,12 @@
+# requirements.lock 을 만들 때만 쓰는 제약(만드는 명령은 requirements.lock 맨 위 주석 — --exclude-newer 는 그날에서 2주 전으로).
+# 다시 만들 때는 옛 requirements.lock 을 먼저 지운다 — uv 는 이미 있는 출력 파일의 지문을 확인 없이 물려받는다(2026-10-19 실측:
+# 틀린 지문을 적어 둔 파일에 다시 만들자 그 지문이 그대로 남았다). install/requirements-build.lock 도 같다.
+# cryptography 49 부터 인텔 맥(x86_64)용 휠이 없다(PyPI 2026-10-19 확인 — 48.0.1 까지 universal2). 인텔 맥에서 소스로 짓지 않게(Rust 가 있어야 한다)
+# 두 칩 모두 48 대에 묶는다(한 판 — 칩마다 다른 판이면 시험한 것과 다른 것이 깔린다). 쓰는 곳: google-auth(서명할 때만 — WideEye 의 Gmail 로그인은 쓰지 않는다).
+cryptography<49
+# 알려진 취약점을 고친 판 이상(pip-audit 2026-11-02 — 보안 점검). 이 셋만 --exclude-newer-package 로 더 새 판을 허용하고(certifi ·
+# opentelemetry-api 는 2026-10-19 = 그날에서 2주 전, pyasn1 은 고친 판이 2026-10-27 에 나와 2026-10-28 — 2주 기다림의 예외, 보안 고침이라서)
+# 나머지는 2026-10-05 그대로 둔다. cryptography 의 고친 판(49)은 위 까닭으로 쓰지 않는다(취약한 서명 기능을 WideEye 는 부르지 않는다).
+certifi>=2026.10.18
+pyasn1>=0.6.5
+opentelemetry-api>=1.45.1

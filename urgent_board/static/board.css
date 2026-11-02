@@ -1,0 +1,140 @@
+/* 긴급현황판 — 가로 960×540. 머리줄(긴급 건수) + 사업 상자 여섯(세 칸 두 줄). 규칙은 docs/design/README.md.
+   글자 크기·색은 아래 토큰만 쓴다(본문에 색 값·크기를 직접 쓰지 않는다). 움직이는 것은 없다(전환·애니메이션 없음). */
+/* 글꼴: 이 기기에 깔린 Pretendard 를 먼저 쓴다. 웹 글꼴(아래)은 깔려 있지 않은 기기를 위한 것이다.
+   2026-10-14: 탭5 창(WKWebView)에서 웹 글꼴을 쓰자 그래픽 프로세스에 글꼴을 푼 사본(6.6MB)이 1분에 하나씩 쌓여 밤새 2.4GB 가 됐다 —
+   글자를 한동안 안 그리면 WebKit 이 그래픽 프로세스의 글꼴을 놓았다가 다시 그릴 때 통째로 다시 보내는데, 앞의 사본이 안 지워진다.
+   깔린 글꼴은 이름으로만 건네므로 쌓일 것이 없다(같은 페이지 6분: 웹 글꼴 50 → 80MB, 깔린 글꼴 51 → 55MB). 순서를 바꾸지 말 것. */
+@font-face{font-family:"Pretendard Variable";src:url(/static/fonts/PretendardVariable.woff2) format("woff2");font-weight:45 920;font-display:swap}
+:root{
+  --bg:#0d1424;--card:#141d31;--box:#19243c;--line:#27334f;--fg:#f3f6fb;--muted:#9aa7bd;--faint:#7f8ca6;
+  --neon-green:#00e054;--neon-lime:#c6ff00;--neon-orange:#ff9100;--neon-cyan:#2bb8ff;--neon-pink:#ff3d9a;--neon-yellow:#ffee00;--neon-violet:#b48cff;
+  --urgent:var(--neon-orange);--ok:var(--neon-green);
+  --fs-0:15px;--fs-1:16px;--fs-2:26px;--fs-5:48px;    /* 16 은 2026-10-17 밤 사용자 "본문 폰트를 전체적으로 더 줄일 수 있는가? 한글자라도 더 많이 보일 수 있도록"(그 전 18), --fs-0 은 알림 둘째 줄(아래) */
+  --fs-row:17px;--fs-when:13px;--row:22px;--row-meta:18px;--chunk-gap:4px;
+                                                        /* 알림 덩어리(D14 — 2026-10-18 사용자 "6개의 셀에 본문내용을 3개 덩어리가 가능할 것 같음 · 덩어리별 폰트/간격/줄간격을 줄이면"):
+                                                           글 17px/22px · 둘째 줄 15px(--fs-0)/18px · 받은 때 13px · 덩어리 사이 4px
+                                                           (같은 날 "둘째즐 15픽셀로 조금만 키우자. 본문 1,2,3의 줄간격을 줄이자" → "본문 폰트를 더 키워도 3개 충분히 들어갈 것 같은데"
+                                                           — 처음 적용은 글 15px/20px · 둘째 줄 14px · 사이 8px)
+                                                           (그 전 16/24 · 16/24 · 14 · 6px — 두 덩어리). 둘째 줄을 글보다 낮게 · 사이를 넓게 — 어느 두 줄이 한 덩어리인지 보이게 */
+  --fs-pname:22px;--fs-palarm:40px;                      /* 세로에서만(아래 @media 블록): 상자 이름 · 날짜 22, 고장 상태 제목 40 — 설계 2026-10-18 D6 */
+  --src:#c9b48a;                                          /* 알림 줄의 출처 글자(모래색 — 사업 색 · 주황 · 보조 회색과 다르다, 2026-10-17) */
+  --pad:20px;--gap:12px;--head:56px;
+}
+/* 사업마다 형광색 하나(config/businesses.yaml 의 color). 개인·기타는 색이 없다 */
+.c-green{--biz:var(--neon-green)}
+.c-lime{--biz:var(--neon-lime)}
+.c-cyan{--biz:var(--neon-cyan)}
+.c-pink{--biz:var(--neon-pink)}
+.c-yellow{--biz:var(--neon-yellow)}
+.c-orange{--biz:var(--neon-orange)}
+.c-violet{--biz:var(--neon-violet)}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--fg);width:960px;height:540px;overflow:hidden}
+body{font-family:Pretendard,"Pretendard Variable",-apple-system,system-ui,"Apple SD Gothic Neo",sans-serif;font-synthesis:none;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;font-weight:400;cursor:default;user-select:none;-webkit-user-select:none}
+
+main{display:flex;flex-direction:column;gap:var(--gap);height:100%;padding:var(--pad)}
+
+/* 머리줄: 왼쪽에 "긴급처리 업무 N건"(숫자만 형광주황), 오른쪽에 보조 줄 둘(확인 시각 · 멈춘 것) */
+/* 머리줄: 왼쪽에 "긴급처리 업무 N건", 가운데 오른쪽에 보조 줄 둘, 맨 오른쪽에 지금 시각 */
+#head{display:flex;align-items:flex-end;gap:20px;height:var(--head);flex:none}
+#title{flex:none;font-size:var(--fs-5);font-weight:800;line-height:1;letter-spacing:-.02em;white-space:nowrap;font-variant-numeric:proportional-nums}   /* 표 숫자 폭이면 "11건"의 1 과 1 사이가 벌어진다 */
+#count{margin-left:10px;font-weight:800;color:var(--urgent)}
+#count:empty{display:none}
+/* 초록은 "전부 확인했고 없다"에만. 처음 뜨는 중·일부가 멈춘 때는 회색, 전부 멈췄거나 서버와 끊겼으면 주황 "확인 불가" */
+main.quiet #count{color:var(--ok)}
+main.quiet.blind-some #count{color:var(--muted)}
+main.loading #label,main.loading #count{color:var(--muted)}
+/* 머리글의 이름("WideEye")은 늘 흰색 — 상태 글자("확인 불가")가 주황(2026-10-17, 그 전에는 머리글 전체가 "확인 불가"였다) */
+main.quiet.blind-all #count,main.lost #count{color:var(--urgent)}
+#info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-end;font-size:var(--fs-1);font-weight:500;line-height:1.3;color:var(--muted)}
+#info div{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#info div:empty{display:none}
+/* 고장을 알리는 줄(수집 중단 · 연결 끊김 · 화면 오류)은 주황으로 **채운다** — 긴급은 주황 선·글자, 고장은 주황 면. 같은 주황 글자면 멀리서 긴급 꼬리표와 가려지지 않는다(검수 2026-10-14) */
+#down{margin-top:2px;padding:0 10px;border-radius:6px;background:var(--urgent);color:var(--bg);font-weight:700}
+#down:not(:empty) ~ #hint{display:none}              /* 둘째 줄은 하나뿐 — 멈춘 것이 있으면 그것이 먼저다(다룬 것은 그 줄 끝에 붙는다) */
+/* 머리글 앞에 이름("WideEye")이 붙어 고장 줄 자리가 좁아졌다(2026-10-17) — 고장 줄 하나만 있는 때(끊김 · 전부 멈춤 — 첫 줄은 비어 있다)는
+   두 줄까지 접어 끝("마지막 확인 15:00" · 멈춘 출처)이 줄임표로 잘리지 않게 한다. 머리줄 높이(56px) 안에 두 줄이 든다 */
+main.lost #down:not(:empty),main.blind-all #down:not(:empty){white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.25;text-align:right;text-wrap:balance}
+/* 지금 시각(사용자 2026-10-14). 머리글과 같은 크기지만 가늘게 — 건수와 다투지 않는다. 숫자 폭을 맞춰(body 의 tabular-nums) 분이 바뀌어도 자리가 흔들리지 않는다 */
+#clock{flex:none;font-size:var(--fs-5);font-weight:500;line-height:1;letter-spacing:-.01em;display:flex;align-items:baseline;gap:12px;white-space:nowrap}
+#clock .date{font-size:var(--fs-2);color:var(--muted);letter-spacing:0}   /* 오늘 날짜 — 시각 왼쪽에 작게(사용자 2026-10-17) */
+#clock:empty{display:none}
+
+/* 사업 상자 여섯 — 차례 고정(설정에 적힌 진행 사업 다섯 + 개인·기타). 건수에 따라 자리를 바꾸지 않는다 */
+#cards{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:var(--gap)}
+main.lost #cards{opacity:.4}                         /* 끊긴 동안 남아 있는 상자는 낡은 것이다 — 흐리게 */
+/* 진행 사업이 다섯 미만이면 상자가 여섯이 안 된다 — 넷은 두 칸 두 줄, 셋 이하는 한 줄(요약 상자가 남는 높이를 쓴다). board.js 가 수를 붙인다 */
+#cards.n4{grid-template-columns:repeat(2,minmax(0,1fr))}
+#cards.n1,#cards.n2,#cards.n3{grid-template-rows:minmax(0,1fr)}
+#cards.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+#cards.n1{grid-template-columns:minmax(0,1fr)}
+/* 상자 · 안쪽 판의 여백은 같은 날 "박스내 좌우/위아래 여백도 조금더 줄이고"로 줄였다(상자 12 · 14 → 10 · 10, 판 8 · 11 → 6 · 8, ● 자리 16 → 14) */
+/* 알림 세 덩어리(D14, 2026-10-18)를 넣으려고 위아래만 더 줄였다(상자 위아래 10 → 8 · 사이 6 → 5, 판 위아래 6 → 5 · 위 틈 2 → 0) — 좌우는 그대로.
+   높이 셈: 상자 210 − 선 2 − 여백 16 = 192 = 이름 31 + 5 + 밑줄 4 + 5 + 판 147(선 2 · 여백 10 · 덩어리 40 × 3 + 사이 4 × 2 = 128 — 5px 남음. 글을 18px/23px 로 올리면 2px 남짓 — 더 키우지 말 것) */
+.card{display:flex;flex-direction:column;gap:5px;min-width:0;min-height:0;padding:8px 10px;background:var(--card);
+  border:1px solid var(--line);border-radius:14px;overflow:hidden}
+/* 이름 줄: 왼쪽에 사업 이름, 오른쪽에 그 사업의 긴급 건수(긴급이 있을 때만) — 20px 꼬리표가 안 읽히는 거리에서도 "어느 사업에 몇 건"이 보이게 */
+.top{flex:none;display:flex;align-items:baseline;gap:10px;min-width:0}
+.name{flex:1;min-width:0;font-size:var(--fs-2);font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.num{flex:none;font-size:var(--fs-2);font-weight:800;line-height:1.2;color:var(--urgent);font-variant-numeric:proportional-nums}
+.rule{flex:none;width:56px;height:4px;border-radius:2px;background:var(--biz,var(--muted))}
+.num.read{color:var(--fg)}                                     /* 읽은 할 일만 있는 상자의 수는 흰색(주황은 안 읽음 · 기한 임박이 있을 때) */
+/* 알림 판: 덩어리 하나 = ●(색이 중요도) · 글(굵게, 한 줄 줄임표) · 둘째 줄(출처 · 누가 · 받은 때). 상자 하나에 세 덩어리까지(D14 — 2026-10-17 까지는 두 줄) */
+.todos{flex:1;min-height:0;display:flex;flex-direction:column;gap:var(--chunk-gap);padding:5px 8px;background:var(--box);border:1px solid var(--line);
+  border-radius:10px;overflow:hidden}
+.todo{flex:none;display:grid;grid-template-columns:17px minmax(0,1fr);column-gap:3px;font-size:var(--fs-row);line-height:var(--row)}     /* ● 자리 14 → 17px — 글이 17px 로 커지자 ● 가 칸을 넘어 글자에 붙었다(D14) */
+/* 표시는 늘 ● 하나 — 색이 중요도(사용자 2026-10-17 "둥그라미, 세모 형태가 아닌 동그라미 색상변화로"): 주황 안 읽음 · 흰색 읽은 할 일 · 회색 답 기다림 · 더 흐린 회색 2주 넘은 것.
+   빨강은 쓰지 않고(디자인 규칙), 사업 색(초록 · 하늘 · 분홍 · 노랑 · 보라)은 사업과 헷갈려 쓰지 않는다 */
+.dot{color:var(--fg)}
+.todo.unread .dot{color:var(--urgent)}
+.todo.awaiting .dot{color:var(--muted)}
+.todo.old .dot{color:var(--faint)}
+.what{min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:proportional-nums}
+.todo .meta{grid-column:2;min-width:0;display:flex;align-items:baseline;gap:6px;font-size:var(--fs-0);line-height:var(--row-meta);color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden}
+.who{min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* 출처(메일 · 문자 · 카톡 · 텔레 · 전화 · 팀즈 — 두 글자)는 글자 색만 다르게(사용자 2026-10-17 "본문 텍스트와 색상 다르게" → 판 · 굵은 글씨로 했더니
+   "굵게하고 키우니.. 본문내용이 안보이게 됨. 출처 색상만 바꾸고"). 사업 색 · 주황은 쓰지 않는다(사업 · 안 읽음과 헷갈린다) */
+.src{flex:none;color:var(--src)}
+/* 받은 때(10/12 13:35)는 작게 · 좁게 — 보낸 사람이 더 보이게(같은 날 "폰트를 더 줄이거나 자간을 줄여서 본문내용이 더 보이게") */
+.when{flex:none;font-size:var(--fs-when);letter-spacing:-.02em;font-variant-numeric:proportional-nums}
+.when.due{color:var(--urgent);font-weight:700}                 /* 기한이 오늘 · 다음 업무일까지거나 지났다 */
+.todo.old .what{color:var(--muted)}                            /* 2주 넘은 할 일 — 아래로, 흐리게 */
+.todo.awaiting .what{color:var(--muted)}                       /* 답 기다림(회색 ●) — 내가 할 일이 아니다: 보조색(2026-10-16) */
+/* 조용한 상자: 이름도 보조색, 안쪽 판을 걷고 한마디는 가운데(테두리 친 빈 칸 여섯이 꺼진 입력 칸처럼 보였다 — 검수 2026-10-14) */
+.card.quiet .name{color:var(--muted)}
+.card.quiet .rule{background:color-mix(in srgb,var(--biz,var(--muted)) 45%,var(--card))}     /* 조용해도 사업 색은 남긴다(흐리게) */
+.card.quiet .todos{align-items:center;justify-content:center;background:transparent;border-color:transparent;color:var(--faint);font-size:var(--fs-1);font-weight:500}
+/* 긴급이 있는 상자는 테두리에 주황을 조금 섞는다 — 멀리서도 어느 상자를 봐야 하는지 보이게(면은 채우지 않는다, 가는 선만) */
+.card.urgent{border:2px solid color-mix(in srgb,var(--urgent) 70%,var(--line));padding:7px 9px}     /* 선이 1px 굵어진 만큼 안쪽 여백을 줄여 자리는 그대로 */
+
+/* ── 세로(탭5 를 90° 돌렸을 때 — 창이 페이지를 540×960 으로 그려 눕혀 보낸다. 설계 docs/exec-plans/2026-10-18-tab5-portrait-design.md,
+   시안 docs/design/mockups/2026-10-18-portrait.html B 안 — 사용자 2026-10-18 "2*3으로 할 것" · "설명글을 한줄이 아닌 2줄로" · "B로 가자").
+   가로 규칙은 위에 그대로 두고 세로에서 달라지는 것만 덮는다(tests/test_web.py 가 가로 부분의 지문을 본다). 높이 셈:
+   960 = 20 + 머리 78 + 12 + 상자 (269 × 3 + 12 × 2) + 20, 상자 안 251 = 이름 26 + 5 + 밑줄 4 + 5 + 판 211(선 2 · 여백 10 · 덩어리 (44 + 18) × 3 + 4 × 2 = 194) */
+@media (orientation: portrait){
+  html,body{width:540px;height:960px}
+  /* 머리 두 줄(높이 고정): 첫 줄 "WideEye N건" · 시각, 둘째 줄 날짜 · 한 줄(고장 > 다룬 것 > 오늘 N건). 시계의 두 조각을 머리의 칸으로 바로 놓는다 */
+  #head{height:78px;flex-wrap:wrap;align-items:flex-end;align-content:space-between;gap:0}
+  #title{flex:0 0 calc(100% - 150px)}
+  #clock{display:contents}
+  #clock .time{flex:0 0 150px;text-align:right}
+  #clock .date{order:1;flex:none;font-size:var(--fs-pname);line-height:26px;margin-right:12px}
+  #info{order:2;flex:1 1 1px;line-height:26px}       /* 기본 폭 1px — 0 이면 꽉 찬 줄 끝에 폭 0 으로 끼어 고장 줄이 사라진다(날짜를 숨긴 고장 상태, 측정 2026-10-18) */
+  #info:has(#down:not(:empty)) #checked,#info:has(#hint:not(:empty)) #checked{display:none}     /* 한 줄만 — 고장이 먼저 */
+  /* 끊김 · 전부 멈춤: 날짜를 숨기고 고장 줄이 둘째 줄 전부(가로처럼 두 줄로 접으면 머리가 높아져 셋째 덩어리가 잘린다), "확인 불가"는 40px
+     ("WideEye 확인 불가" 48px 378 + 시각 131 = 509 > 500 — 설계 검토가 잼) */
+  main.lost .date,main.blind-all .date{display:none}
+  main.lost #title,main.quiet.blind-all #title{font-size:var(--fs-palarm)}
+  main.lost #down:not(:empty),main.blind-all #down:not(:empty){display:block;white-space:nowrap;text-align:left;-webkit-line-clamp:none}
+  /* 상자 2열 × 3행(차례 · 수는 가로와 같다). 넷이면 2 × 2, 셋 이하면 한 열 */
+  #cards{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr))}
+  #cards.n4{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}
+  #cards.n3{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(3,minmax(0,1fr))}
+  #cards.n2{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr))}
+  #cards.n1{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+  .name,.num{font-size:var(--fs-pname)}                          /* 상자 폭 244px — 가로의 26px 면 긴 사업 이름(예: 열 글자가 넘는 이름)이 잘린다 */
+  /* 설명은 두 줄까지(낱말 단위로 줄을 바꾸고 긴 낱말은 끊는다), 넘치면 둘째 줄 끝이 "…" */
+  .what{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:keep-all;overflow-wrap:anywhere}
+}

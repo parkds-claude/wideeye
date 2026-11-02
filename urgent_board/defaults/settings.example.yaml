@@ -1,0 +1,35 @@
+# 긴급현황판 설정 — 처음 쓰는 사람의 예시. AI 와 함께 설정(urgentboard setup guide) · 자세한 설정 화면(/settings)이 고친다(5초 안에 반영).
+# 출처는 모두 꺼 둔다 — 설정 안내서 2단계에서 쓸 것만 켠다. 예시 상자는 첫 상자를 더할 때 지워진다.
+version: 2
+me:
+  names: []                 # 나를 부르는 말 — 단톡방에서 이 말이 들어 있으면 나를 부른 것으로 친다(예: "팀장님", "홍길동")
+  addresses: []             # 내 메일 주소
+  phone_tails: []
+  personal_accounts: []     # 개인 메일 계정 — 어느 사업에도 안 걸리면 '개인'
+accounts:
+  gmail: []
+  telegram: {enabled: false}
+  kakao: {enabled: false}   # 실험 기능 — kakaocli 를 따로 설치해야 한다
+  imessage: {enabled: false}
+boxes:
+  - key: example
+    name: 예시 사업
+    color: green
+    active: true
+    memo: "예시 — 첫 상자를 더하면 지워진다"
+    mail_accounts: []
+    senders: []
+    kakao_rooms: []
+    telegram_rooms: []
+    keywords: []
+etc_name: "개인 · 기타"
+unconfirmed: []
+contacts: []
+watch_rooms: []
+display: {old_task_days: 14, tab5_usb_serial: ""}
+summary: {enabled: false, sources: [gmail, kakao, imessage]}
+handled: {claude_sessions: false}
+workhours: {start: "09:00", end: "18:00", lunch: ["12:00", "13:00"], holidays: KR, extra_holidays: [], extra_workdays: []}
+server: {port: 5091}
+service: {engine: launchd}
+rules: {}

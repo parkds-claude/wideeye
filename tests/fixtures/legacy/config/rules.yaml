@@ -1,0 +1,94 @@
+# 판정 낱말·문턱값 (조사 C §6·§7). 완성형 음절만 쓴다. 문턱의 시간 단위는 업무시간.
+thresholds:
+  unanswered_dm_hours: 2
+  unanswered_group_hours: 4
+  unanswered_sms_minutes: 20  # 읽은 1:1 문자 요청은 업무시간 20분이면 대기(사용자 2026-10-15 "읽은 문자 요청은 20분으로") — 메일 · 카톡 · 텔레그램은 위의 2시간
+  deadline_within_hours: 8
+  waiting_deadline_days: 3
+  nudge_count: 2          # 처음 메시지 + 재촉 1번 = 2
+  resolved_max_chars: 12  # 이 글자 수(공백·문장부호 제외) 이하의 '해결됐습니다/감사합니다' 류만 해결로 본다 — 긴 후속의 끝인사는 해결이 아니다
+  nudge_gap_min: 10       # 이 분 안에 이어 보낸 메시지는 재촉으로 세지 않는다(나눠 쓴 메시지)
+  group_other_reply_min: 5
+  after_my_message_min: 10
+# 긴급에서 빼는 것(스팸·광고·자동 발송). 사용자 정의(2026-10-13): "긴급은 내가 확인하지 않은 메일, 메세지. 스팸, 광고성은 제외"
+junk:
+  # Gmail 이 붙인 분류 → 빼는 까닭. 줄을 지우면 그 분류는 빼지 않는다(예: 자동 알림도 긴급으로 보려면 CATEGORY_UPDATES 줄 삭제).
+  # 사용자 결정(2026-10-13 16:0x): 자동 알림(은행·홈택스·주문)은 "지금은 빼자" — CATEGORY_UPDATES 줄을 그대로 둔다.
+  # 내가 메일을 보낸 적 있는 상대의 notice·bulk 는 빼지 않는다(Gmail 이 거래처 메일을 '업데이트'로 잘못 분류하는 경우).
+  gmail_labels:
+    CATEGORY_PROMOTIONS: ad
+    CATEGORY_SOCIAL: ad
+    SPAM: ad
+    CATEGORY_FORUMS: bulk
+    CATEGORY_UPDATES: notice
+  # 협회·단체가 돌리는 행사 공지도 광고·홍보다(사용자 2026-10-14 "협회 토론회 안내 --> 광고,홍보성으로 보임") —
+  # "회원사 여러분" · "많은 관심과 참여/신청". 9/1 이후 저장된 2,119건에서 협회 공지 5건만 걸렸다. 지켜보는 방(watch_rooms)에는 쓰지 않는다.
+  ad_text_re: "\\(광고\\)|\\[광고\\]|무료\\s*(?:수신)?\\s*거부|수신\\s*거부|회원사\\s*여러분|많은\\s*관심과\\s*(?:참여|신청)"
+  auto_text_re: "\\[Web발신\\]|\\[국제발신\\]|\\[국외발신\\]"
+# 메시지 요약 — 원문 대신 "무엇을 바라는지" 한 줄로 보인다(Claude Haiku, 구독 로그인, 도구 없음).
+# 켜면 화면에 뜰 메시지의 글이 Claude 로 전송된다. 끄려면 enabled: false(그러면 원문 앞부분이 그대로 나온다).
+summary:
+  enabled: true
+  model: haiku
+  max_chars: 60              # 화면에 나가는 요약의 길이 상한(사용자 2026-10-13: "조금 더 길게" — 40 → 60). 모델에게는 이 값의 80%를 달라고 한다. 바꾸면 이미 뜬 것도 다시 만든다
+  max_per_day: 300           # 하루에 만드는 요약 수 상한(항목 요약과 아래의 사업 요약이 함께 쓴다)
+  # 사업 상자의 요약(사업 요약) 길이 상한 — 상자의 요약 자리는 세 줄이다. 상자마다 묶인 글을 한 번 더 Haiku 에 보내 만든다
+  # (새로 나가는 글은 없다 — 항목 요약을 만들 때 이미 가던 글이다. 호출 수만 는다). 0 이면 만들지 않고 가장 최근 항목의 한 줄을 보인다.
+  card_max_chars: 40
+  # 대기(읽었지만 답 안 한 것)를 '내용에 따라' 한 번 더 거른다 — 요약과 같은 호출에서 Haiku 가 "계속 챙겨 볼 필요가 있는가"를 판단한다.
+  # 긴급(안 읽은 것)에는 쓰지 않는다. 볼 필요 없다고 본 것은 화면에서 빠지고 전체 목록(/list) 아래에 까닭과 함께 남는다. 판단이 없으면 보인다.
+  judge: true                # 끄려면 false
+  # 볼 필요가 없는 것의 기준. 사용자 예시(2026-10-13): 지인이 돌린 "조카 아이돌 데뷔 팔로우·하트 부탁" = 안 봐도 됨 / 업무 메일의 회신 = 반드시 봄.
+  # 이 글을 바꾸면 이미 뜬 것도 다시 판단한다. 애매한 것은 보이는 쪽으로 두라고 지시문에 적혀 있다.
+  skip_when: "여러 사람에게 돌린 듯한 홍보·응원·팔로우·구독·투표 부탁, 안부·명절·축하 인사, 경조사 단체 알림, 물건·서비스·모임 권유"
+# 통째로 지켜보는 단톡방. 사용자 2026-10-14 "텔레그램 합창단 단톡방 — 안 읽은 것은 표시해줘. 하나로"
+# 나를 부르지 않은 글도 안 읽은 것이 있으면 탭5 에 올린다 — 방마다 한 줄("안 읽은 글 N건 — 요약", 긴급 1건)로 묶는다.
+# 방을 읽으면 사라진다. 나를 부른 글은 묶지 않고 전처럼 따로 뜬다. 묶인 글은 요약을 만들 때 Claude 로 간다(summary.enabled).
+# chat_id 는 저장소에서 본다: tools/replay.py 나 /list 의 "단톡방 일반 글". 방을 더하려면 여기에 한 줄.
+watch_rooms:
+  - {source: telegram, chat_id: -100000000001}     # 합창 연습 일정방
+
+# 이미 챙긴 것을 화면에서 뺀다. 사용자 2026-10-13 18시: "내가 읽었던 것, 너와 대책을 세웠던 것은 빼줘"
+# (읽은 것은 긴급이 있는 상자에서는 보이지 않는다 — 아래 display. Claude 와 다룬 것은 여기)
+handled:
+  # 메일이 도착한 뒤 사람이 쓰는 Claude 창(VSCode·터미널)이 그 메일을 도구로 다뤘으면 — 스레드 열기 · 답장 초안 · 시트에 옮겨 적기 ·
+  # 그 id 를 넣은 명령 — 화면에서 뺀다. 안 읽은 것(긴급)도 뺀다. 전체 목록(/list)에 다룬 시각과 함께 남는다.
+  # 봇의 claude -p 는 치지 않는다. 목록에 보였을 뿐이거나 말로만 언급한 것도 치지 않는다. 세션 기록(~/.claude/projects)을 읽기만 한다.
+  claude_sessions: true      # 끄려면 false
+  lookback_days: 7
+# 화면 동작(탭5 — 머리줄 + 사업 상자 여섯)
+display:
+  # 긴급이 없는 사업 상자를 대기(읽었지만 답 안 한 것)로 채운다 — 보조색으로, 주황 없이. 사용자 2026-10-14 아침:
+  # "'긴급없음'은 너무 없어 보인다. 과거 내용이라도 보여줘". 긴급이 있는 상자는 긴급만 말한다(사용자 2026-10-13 "내가 읽었던 것은 빼줘").
+  # 끄면(false) 긴급이 없는 상자는 모두 "확인할 것 없음"이 된다. 전체 목록(/list)의 대기 구역에는 어느 쪽이든 그대로 나온다.
+  fill_with_waiting: true
+  # 현황판 그림을 보낼 탭5 의 USB 일련번호(= MAC). 이 기기에만 보낸다 — USB-C 직렬, 창 안의 탭5 연결(tools/tab5_link.py).
+  # 설계 docs/exec-plans/2026-10-15-tab5-usb-frames-design.md. 비우면 그림을 보내지 않는다.
+  tab5_usb_serial: "AA:BB:CC:00:00:02"
+# 주말·공휴일이어도 업무일로 칠 날(행사 운영일). 이날은 기다린 시간이 흐른다. 예: ["2026-10-31"]
+extra_workdays: []
+client_titles: ["주무관", "사무관", "과장님", "국장님", "담당관", "발주처", "팀장님"]
+# 긴급 낱말은 '서두르라'는 명시적 표현만 둔다. 계약·입금·결제·발주·취소·사고·마감·기한·승인 요청 같은 주제어는 뺐다 —
+# 사용자 판단(2026-10-13): 그런 낱말이 들었다고 급한 것이 아니다. 기한은 날짜 + '까지' 로 따로 잡는다.
+urgent_words_ko: "(긴급|급(?:히|하게|합니다|해요|함|한\\s*건)|시급|최대한\\s*빨리|지금\\s*(?:바로|당장)|당장|즉시|조속(?:히|한)|서둘러|빠른\\s*(?:회신|답변|확인|처리|연락)|오늘\\s*(?:중|안|내|까지)|금일\\s*(?:중|내|까지)|퇴근\\s*전|점심\\s*전|오전\\s*중|한\\s*시간\\s*(?:내|안)|늦어도|미회신|답(?:이|변이)?\\s*없|연락\\s*(?:안|없)|재차|다시\\s*한\\s*번\\s*(?:요청|부탁)|전화\\s*(?:주세요|부탁|바랍|드렸)|통화\\s*가능|문제\\s*(?:생겼|발생))"
+urgent_words_en: "\\b(urgent(?:ly)?|asap|immediately|right away|critical|emergency|time[- ]sensitive|deadline|due (?:today|tomorrow|by)|by (?:eod|cob|eow|noon|end of (?:day|business|week))|overdue|blocked|action required|response required|please respond|final (?:notice|reminder)|last call)\\b|!{2,}"
+# 날짜·시각 표현 바로 뒤에 이 꼬리말이 있어야 기한으로 본다("내일 회의"는 기한이 아니다). 표현 자체가 '중/내'로 끝나도 기한("금주 중").
+deadline_suffix_ko: "^\\s*(?:전\\s*)?(?:까지|내로|내에|이내|안으로|안에|중으로|중에|으로\\s*(?:회신|답변|제출|확정|부탁))"
+deadline_inner_ko: "(?:중|내)$"
+soft_words_ko: "(내일\\s*(?:오전|아침|까지|중)|모레까지|이번\\s*주\\s*(?:내|중|까지)|주내|금주\\s*(?:내|중)|가능하면\\s*빨리|신속)"
+question_ends_ko: "(?:까요|나요|가요|니까|지요|는지|신지|은지|죠|은가|는가|나용|까용)\\s*[?？]*\\s*$"
+question_ends_short_ko: "(?:나|니|냐|까|지)\\s*[?？]\\s*$"
+# 물음표 없는 간접 질문(사용자 2026-10-15 — "…언제까지 받으실껀지 궁금합니다!!" 가 대기로 안 떴다). '궁금증이 풀렸다' · '궁금했는데' 는 걸리지 않게 어미까지 적는다
+question_indirect_ko: "궁금(?:합니다|해요|하네요|합니당|해서)|여쭙(?:니다|습니다|고자|어요|겠습니다)|여쭤\\s*(?:봅니다|보려|볼게요|봐요|보고)|문의\\s*드(?:립니다|려요)"
+question_wh_ko: "(?<![가-힣])(언제|어디|어떻게|어떤|무엇|뭐|몇|얼마|누구|왜|어느)"
+request_ko: "(부탁(?:드립니다|드려요|합니다|해요)|바랍니다|바래요|주세요|주시(?:면|기|겠|길)|요망|요청(?:드립니다|합니다)|(?:회신|답변|답장)\\s*(?:을|를|은|이|도|좀)?\\s*(?:기다리|가능|주십시오|해\\s*주)|알려\\s*주|보내\\s*주|공유\\s*(?:부탁|해\\s*주)|가능(?:할까요|한지|하신지|여부|할지)|검토\\s*(?:부탁|요망|바랍)|승인\\s*(?:부탁|요망|바랍)|의견\\s*(?:부탁|주)|확정\\s*(?:부탁|요망|필요|바랍)|확인\\s*(?:바랍|부탁|요망|해\\s*주))"
+question_en: "\\?\\s*$|\\b(what|when|where|who|why|how|which)\\b.*\\?|\\b(could|can|would|will|do|does|did|is|are|should|may)\\s+(you|we|i|it)\\b"
+request_en: "\\b(please|kindly|pls)\\b|\\b(let me know|let us know|lmk|please confirm|kindly confirm|confirm (?:receipt|if|whether)|could you|can you|would you|would you mind|get back to (?:me|us)|your (?:thoughts|input|feedback|approval|confirmation)|advise|rsvp)\\b"
+# 판정 전에 지우는 인사말 — "잘 부탁드립니다"의 '부탁'은 요청이 아니다
+courtesy_ko: "잘\\s*부탁\\s*(?:드립니다|드려요|드리겠습니다|합니다|해요)|수고\\s*(?:하세요|하십시오|많으십니다)"
+resolved_ko: "(해결(?:됐|되었|했)|됐습니다|처리(?:됐|되었|완료)|확인했습니다|취소합니다|신경\\s*(?:안|쓰지)|괜찮습니다|감사합니다\\s*$|^넵$|네\\s*알겠습니다)"
+# 추임새·인사만 있는 메시지(낱말 단위로 적는다 — 글자 모음으로 적으면 '사고' 같은 말이 잡음이 된다). 물음표 하나는 재촉이라 넣지 않는다.
+noise_only: "^(?:[\\s!.~^;,]|[\\U0001F300-\\U0001FAFF\\u2600-\\u27BF\\uFE0F\\u200D]|ㅋ+|ㅎ+|ㅠ+|ㅜ+|ㅇㅋ|ㅇㅇ|넵|넹|네|예|옙|옛|넴|오키|ok|OK|굿|굳|감사합니다|감사해요|고맙습니다|수고하셨습니다|고생하셨습니다|알겠습니다)*$"
+auto_sender_re: "^(noreply|no-reply|do-?not-?reply|donotreply|notifications?|notif|alerts?|mailer-daemon|postmaster|bounces?|newsletter|news|updates?|account|system|marketing|promo|app|security|verify|verification|auth)@"
+auto_subject_re: "^(auto(?:matic)? ?reply|out of office|자동\\s*회신|부재중|부재\\s*알림|\\[광고\\]|\\(광고\\)|\\[AD\\]|수신확인|읽음\\s*확인)|\\bis out of the office\\b|verification code|confirm your (?:email|account)|password reset|security alert|인증\\s*(?:번호|코드)|보안\\s*(?:알림|경고)|비밀번호\\s*(?:재설정|변경)"
+quote_cut_re: "(?m)^(>|-----Original Message-----|On .* wrote:|보낸 사람:|From: )"

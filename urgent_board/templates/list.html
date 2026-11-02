@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>긴급현황판 — 전체 목록</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<link rel="stylesheet" href="/static/list.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>긴급현황판 <small>전체 목록</small></h1>
+    <p class="sum"><b class="u">처리할 일 {{ v.totals.tasks }}</b> · 안 읽음 {{ v.totals.unread }} · 확인 {{ v.checked_at }}{% if v.down %} · <span class="warn">{{ v.down|join(" · ") }} 수집 중단</span>{% endif %}{% if v.book_error %} · <span class="warn">할 일 장부 오류</span>{% endif %}</p>
+    <p class="hint">처리할 일 = 안 읽은 것 + 읽었지만 끝나지 않은 질문 · 요청. 그 대화에 내가 답하면 스스로 끝나고, 답 없이 끝내려면 "처리됨". 끝날 때까지 남는다(2주 넘으면 '오래됨').
+      사업이 틀렸으면 "사업"에서 고른다 — 그 보낸 사람(방 묶음은 방)은 다음부터 늘 그 사업이다(설정에 적힌다).</p>
+  </header>
+
+  <section class="urgent">
+    <h2>처리할 일 {{ v.tasks|length }}</h2>
+    {% if not v.tasks %}<p class="none">없음</p>{% endif %}
+    <ul>
+    {% for t in v.tasks %}
+      <li class="{% if t.old %}old{% endif %}">
+        <div class="meta">
+          <span class="biz{% if t.business_color %} c-{{ t.business_color }}{% endif %}{% if not t.business_known %} none{% endif %}">{{ t.business_name }}</span>{% if t.guessed %}<span class="guess" title="규칙이 못 맞혀 Claude 가 고른 사업 — 틀리면 아래 '사업'에서 고르면 그 사람은 다음부터 그 사업">Claude 추정</span>{% endif %}
+          <span>{% if t.unread %}● 안 읽음{% else %}○ 읽음{% endif %}</span><span>{{ t.source }}</span>{% if t.where %}<span>{{ t.where }}</span>{% endif %}
+          <span>{{ t.received_text }}</span>{% if t.due_text %}<span class="due">{{ t.due_text }}</span>{% endif %}{% if t.old %}<span>오래됨 · {{ t.opened_text }}부터</span>{% endif %}
+        </div>
+        <div class="what"><b>{{ t.what }}</b> — {{ t.sender }} · {{ t.summary }}</div>
+        <div class="act">{% if t.link %}<a href="{{ t.link }}">열기</a>{% endif %}<button type="button" data-key="{{ t.key }}">처리됨</button>
+          <label class="teach-label">사업 <select class="teach" data-key="{{ t.key }}" data-was="{{ t.box_key }}" title="고르면 이 {% if t.conv.startswith('room|') %}방{% else %}보낸 사람{% endif %}은 다음부터 늘 그 사업">{% for k, n in v.box_choices %}<option value="{{ k }}"{% if k == t.box_key %} selected{% endif %}>{{ n }}</option>{% endfor %}</select></label></div>
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+
+  {% if v.awaiting %}
+  <section class="skipped awaiting">
+    <h2>답 기다림 {{ v.awaiting|length }} <small>내가 보낸 질문 · 요청에 상대 답이 아직 없는 것 — 답이 오면 사라진다</small></h2>
+    <ul>
+    {% for t in v.awaiting %}
+      <li>
+        <div class="meta"><span class="biz{% if t.business_color %} c-{{ t.business_color }}{% endif %}{% if not t.business_known %} none{% endif %}">{{ t.business_name }}</span>
+          <span>△ 답 기다림</span><span>{{ t.source }}</span><span>{{ t.received_text }} 보냄</span></div>
+        <div class="what"><b>{{ t.what }}</b> — {{ t.sender }}</div>
+        <div class="act">{% if t.link %}<a href="{{ t.link }}">열기</a>{% endif %}<button type="button" data-key="{{ t.key }}">처리됨</button>
+          <label class="teach-label">사업 <select class="teach" data-key="{{ t.key }}" data-was="{{ t.box_key }}" title="고르면 이 받는 사람은 다음부터 늘 그 사업">{% for k, n in v.box_choices %}<option value="{{ k }}"{% if k == t.box_key %} selected{% endif %}>{{ n }}</option>{% endfor %}</select></label></div>
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if v.closed %}
+  <section class="skipped closed">
+    <h2>최근 끝난 것 {{ v.closed|length }} <small>지난 7일</small></h2>
+    <ul>
+    {% for t in v.closed %}
+      <li>
+        <div class="meta"><span class="why">{{ t.why }}</span><span>{{ t.source_text }}</span><span>끝남 {{ t.closed_text }}</span></div>
+        <div class="what"><b>{{ t.what }}</b> — {{ t.sender }}</div>
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if v.handled %}
+  <section class="skipped handled">
+    <h2>Claude 와 다룬 것 {{ v.handled|length }} <small>도착한 뒤 Claude 창이 이 메일을 도구로 다뤘다</small></h2>
+    <p class="hint">스레드 열기 · 답장 초안 · 시트에 옮겨 적기처럼 Claude 가 그 메일을 직접 다룬 흔적이 세션 기록에 있어 화면에서 뺐다(봇의 호출은 치지 않는다). 아직 챙기지 않은 것이 여기 있으면 알려 주세요 — config/rules.yaml 의 handled.claude_sessions 로 끌 수 있다.</p>
+    <ul>
+    {% for it in v.handled %}
+      <li>
+        <div class="meta"><span class="why">다룬 때 {{ it.handled_text }}</span><span>{{ it.source }}</span>{% if it.where %}<span>{{ it.where }}</span>{% endif %}<span>받음 {{ it.received_text }}</span></div>
+        <div class="what"><b>{{ it.sender }}</b> — {{ it.summary }}</div>
+        {% if it.ai %}<div class="raw">{{ it.raw_summary }}</div>{% endif %}
+        {% if it.link %}<div class="act"><a href="{{ it.link }}">열기</a></div>{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if v.unneeded %}
+  <section class="skipped unneeded">
+    <h2>할 일에서 뺀 것 {{ v.unneeded|length }} <small>읽었고 답하지 않았지만 할 일이 없다고 판단</small></h2>
+    <p class="hint">요약을 만드는 Claude Haiku 가 기준(설정의 summary.skip_when)에 따라 판단했다. 잘못 빠진 것이 있으면 알려 주세요 — 기준을 고칩니다. 안 읽은 것은 이 판단으로 빼지 않는다.</p>
+    <ul>
+    {% for it in v.unneeded %}
+      <li>
+        <div class="meta"><span class="why">할 일 없다고 판단</span><span>{{ it.source }}</span>{% if it.where %}<span>{{ it.where }}</span>{% endif %}<span>{{ it.received_text }}</span></div>
+        <div class="what"><b>{{ it.sender }}</b> — {{ it.summary }}</div>
+        {% if it.ai %}<div class="raw">{{ it.raw_summary }}</div>{% endif %}
+        {% if it.link %}<div class="act"><a href="{{ it.link }}">열기</a></div>{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <section class="skipped">
+    <h2>할 일에서 뺀 안 읽은 것 {{ skipped_total }} <small>{% for label, n in skipped_counts %}{{ label }} {{ n }}{% if not loop.last %} · {% endif %}{% endfor %}</small></h2>
+    <p class="hint">빠진 것 가운데 봐야 할 것이 있으면 알려 주세요 — 규칙(설정의 rules.junk)을 고칩니다.{% if skipped_total > skipped|length %} 최근 것부터 앞의 {{ skipped_max }}건만 보인다(전체 {{ skipped_total }}건).{% endif %}</p>
+    <ul>
+    {% for x in skipped %}
+      <li>
+        <div class="meta"><span class="why">{{ x.reason_label }}</span><span>{{ x.source }}</span><span>{{ x.received_text }}</span></div>
+        <div class="what"><b>{{ x.sender }}</b> — {{ x.summary }}</div>
+        {% if x.link %}<div class="act"><a href="{{ x.link }}">열기</a></div>{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  </section>
+</main>
+<script src="/static/list.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# WideEye 코드 폴더에서 생기는 것 — 올리지 않는다
+.venv
+.tools/
+.python/
+__pycache__/
+*.pyc
+.pytest_cache/
+build*/
+dist/
+*.egg-info/
+.DS_Store
+
+# 자료 · 비밀(자료는 ~/Library/Application Support 에 두지만, 코드 폴더에 생겨도 올리지 않게)
+auth/
+state/
+logs/
+backups/
+data/
+*.session
+*.session-journal
+.env
+.env.*
+*.db
+*.sqlite

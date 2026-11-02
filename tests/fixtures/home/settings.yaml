@@ -1,0 +1,106 @@
+# 긴급현황판 설정 — 설정 화면(/settings)이 쓴다. 손으로 고쳐도 된다(5초 안에 반영 · 틀리면 이전 설정으로 계속 돈다).
+# 화면으로 저장하면 이 파일의 주석은 지워진다 — 남길 말은 사업의 memo 칸에.
+version: 2
+me:
+  names: [대장님, 김민수, 민수님, 김대장, 김 대장]
+  addresses: [minji@example.com, main@example.com, office@example.org, snack@example.com, hobby@example.com, table@example.com]
+  phone_tails: []
+  personal_accounts: [hobby@example.com, snack@example.com, table@example.com]
+accounts:
+  gmail:
+  - {alias: workbase, email: minji@example.com, token: 'keychain:MailHelperApp.workbase/oauth2_token', label: 업무}
+  - {alias: workmain, email: main@example.com, token: 'keychain:MailHelperApp.workmain/oauth2_token', label: workbase}
+  - {alias: choir, email: office@example.org, token: 'keychain:MailHelperApp.choir/oauth2_token', label: 사무국}
+  - {alias: snack, email: snack@example.com, token: 'keychain:MailHelperApp.snack/oauth2_token', label: snack}
+  - {alias: hobby, email: hobby@example.com, token: 'keychain:MailHelperApp.hobby/oauth2_token', label: hobby}
+  telegram: {enabled: true}
+  kakao: {enabled: true}
+  imessage: {enabled: true}
+boxes:
+- key: spring-festival
+  name: 봄 축제 준비
+  color: violet
+  active: true
+  memo: ''
+  mail_accounts: []
+  senders: []
+  kakao_rooms: []
+  telegram_rooms: []
+  keywords: [봄맞이 축제, 봄맞이축제, 축제, springfest]
+- key: bazaar2
+  name: 동네 합창 모임
+  color: yellow
+  active: true
+  memo: ''
+  mail_accounts: [office@example.org]
+  senders: []
+  kakao_rooms:
+  - {id: '100000000000001'}
+  - {id: '100000000000002'}
+  - {name: 합창단_해오름-악보정리 소통방}
+  - {name: 합창단_책마을&해오름}
+  telegram_rooms:
+  - {id: '-100000000001', watch: true}
+  - {id: '-100000000002'}
+  keywords: [합창단, 정기연주회, 합창, 동네연습회, 포장]
+- key: bookshop-team
+  name: 책방운영단
+  color: cyan
+  active: true
+  memo: ''
+  mail_accounts: []
+  senders: []
+  kakao_rooms:
+  - {id: '100000000000003'}
+  - {name: 🍎책마을-해오름 항공권 발권방}
+  - {name: 책마을-해오름 항공권 발권방}
+  telegram_rooms: []
+  keywords: [책방운영단, 책방운영진, 운영진, 확장개점, 책방, 항공권, 항공, 발권, 책마을]
+- key: garden
+  name: 마을 정원 가꾸기
+  color: green
+  active: true
+  memo: ''
+  mail_accounts: []
+  senders: []
+  kakao_rooms: []
+  telegram_rooms: []
+  keywords: [정원조성, 구청정원, 생활녹지, 시립정원관]
+- key: calligraphy-club
+  name: 동네 서예 동호회
+  color: pink
+  active: true
+  memo: ''
+  mail_accounts: []
+  senders: []
+  kakao_rooms: []
+  telegram_rooms: []
+  keywords: [서예, 동호회, calligraphy]
+etc_name: 개인 · 기타
+unconfirmed:
+- name: 구청 정책설명회 대행
+  keywords: [생활녹지 마을실천, 생활녹지마을실천, 실천사례 나눔, 실천사례나눔, 정책설명회]
+  memo: ''
+contacts: []
+watch_rooms: []
+display: {fill_with_waiting: true, tab5_usb_serial: 'AA:BB:CC:00:00:02'}
+summary:
+  enabled: true
+  model: haiku
+  max_chars: 60
+  max_per_day: 300
+  judge: true
+  card_max_chars: 40
+  skip_when: 여러 사람에게 돌린 듯한 홍보·응원·팔로우·구독·투표 부탁, 안부·명절·축하 인사, 경조사 단체 알림, 물건·서비스·모임 권유
+  sources: [gmail, kakao, telegram, imessage]
+handled: {claude_sessions: true, lookback_days: 7}
+workhours:
+  start: 09:00
+  end: '18:00'
+  lunch: ['12:00', '13:00']
+  holidays: KR
+  extra_holidays: []
+  extra_workdays: []
+server: {port: 5091}
+service: {engine: external}
+rules: {}

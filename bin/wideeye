@@ -1,0 +1,13 @@
+#!/bin/sh
+# WideEye 관리 명령 — bin/urgentboard 와 같다(tools/ub.py 를 코드 폴더의 가상 환경으로 부른다). 다른 곳에 링크해 두어도 된다.
+#   wideeye guide next | check <id> | confirm <id> yes|no | profile [키=값 …] | status | marker   설정 길(AI 가 이 출력만 따른다)
+#   wideeye install | uninstall | start|stop|restart [engine|menubar|display|all] | status | doctor [--bundle f.zip] | open [setup|settings|list|board]
+#   wideeye setup <명령> …   설정 명령(차례: wideeye setup guide)
+SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+DIR="$(cd "$(dirname "$SELF")/.." && pwd)" || exit 1
+PY="$DIR/.venv/bin/python"
+if [ ! -x "$PY" ]; then
+  echo "가상 환경이 없다 — 먼저 $DIR/install.sh" >&2
+  exit 1
+fi
+exec "$PY" "$DIR/tools/ub.py" "$@"

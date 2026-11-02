@@ -1,0 +1,37 @@
+/* 긴급현황판 — 설정 한눈에(맥, /setup). 토큰 · 글자 · 단추는 settings.css 를 함께 읽는다(디자인 문서 '설정 한눈에' 절).
+   한 단 920px, 읽기 전용. 빨강 없음 · 움직임 · 그림자 · 아이콘 없음. 색 값을 여기에 쓰지 않는다(settings.css 의 :root 토큰만). */
+.setup{max-width:920px;margin:0 auto;padding:28px 24px 64px}
+.setup .top{display:flex;align-items:baseline;gap:16px}
+.setup .top h1{flex:1}
+.setup .top .btn{text-decoration:none}
+.setup section{margin-top:28px}
+.setup code,.setup .prompt{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:var(--fs-s)}
+
+.steps{list-style:none;margin-top:8px}
+.steps li{display:grid;grid-template-columns:1.5em 7em minmax(0,1fr);column-gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.steps .mark{color:var(--muted)}
+.steps .todo .mark{color:var(--urgent)}
+.steps .name{font-weight:600}
+.steps .line{color:var(--muted);font-size:var(--fs-s);padding-top:2px}
+.steps .note{display:block}
+.steps .next{grid-column:3;color:var(--urgent);font-size:var(--fs-s);margin-top:2px;overflow-wrap:anywhere}
+.steps .next code{color:var(--urgent)}
+
+.prompt{white-space:pre-wrap;border:1px solid var(--line);padding:12px 14px;margin-top:10px;line-height:1.6}
+
+.srcs{list-style:none;margin-top:8px}
+.srcs li{display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+.srcs b{font-weight:600}
+.srcs .state{color:var(--muted);font-size:var(--fs-s)}
+
+.six{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:12px}
+.card{border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-height:150px;overflow:hidden}
+.card .name{font-size:var(--fs-l);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .about{color:var(--muted);font-size:var(--fs-s);margin-top:8px}
+.card.empty{display:flex;align-items:center;justify-content:center;border-style:dashed}
+.card.etc .bar-line,.card.c-none .bar-line{background:var(--muted)}
+.rule{font-size:var(--fs-s);margin-top:6px;overflow-wrap:anywhere}
+.rule .k{color:var(--muted);margin-right:8px}
+.rule.warn{color:var(--urgent)}
+
+.links{display:flex;gap:20px;margin-top:36px;padding-top:12px;border-top:1px solid var(--line);font-size:var(--fs-s)}

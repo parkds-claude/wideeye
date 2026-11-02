@@ -1,0 +1,7 @@
+# 시험용 가짜 값(옛 꼴 .env — 공개판에 .env 이름의 파일을 싣지 않으려고 이 이름으로 두고, 시험이 임시 사본에서 .env 로 바꿔 읽는다 · tools/migrate.py · settings_legacy 시험)
+TELEGRAM_API_ID=12345
+TELEGRAM_API_HASH=0123456789abcdef0123456789abcdef
+TELEGRAM_SESSION_PATH=auth/telethon.session
+GMAIL_KEYCHAIN_PREFIX=MailHelperApp
+GMAIL_ACCOUNTS=workbase:minji@example.com,workmain:main@example.com,choir:office@example.org,snack:snack@example.com,hobby:hobby@example.com
+BOARD_PORT=5091

@@ -1,0 +1,39 @@
+/* 긴급현황판 — 맥에서 여는 전체 목록. 색·글꼴은 화면(board.css)과 같은 토큰을 쓴다. */
+@font-face{font-family:"Pretendard Variable";src:url(/static/fonts/PretendardVariable.woff2) format("woff2");font-weight:45 920;font-display:swap}
+:root{
+  --bg:#171717;--fg:#fafafa;--muted:#b4b4b4;--line:#2e2e2e;
+  --neon-green:#00e054;--neon-lime:#c6ff00;--neon-orange:#ff9100;--neon-cyan:#2bb8ff;--neon-pink:#ff3d9a;--neon-yellow:#ffee00;--neon-violet:#b48cff;
+  --urgent:var(--neon-orange);
+}
+.c-green{--biz:var(--neon-green)}.c-lime{--biz:var(--neon-lime)}.c-cyan{--biz:var(--neon-cyan)}.c-pink{--biz:var(--neon-pink)}.c-yellow{--biz:var(--neon-yellow)}.c-orange{--biz:var(--neon-orange)}.c-violet{--biz:var(--neon-violet)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:Pretendard,"Pretendard Variable",-apple-system,system-ui,"Apple SD Gothic Neo",sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+main{max-width:920px;margin:0 auto;padding:32px 24px 64px}
+h1{font-size:28px;font-weight:600}
+h1 small,h2 small{font-size:14px;font-weight:400;color:var(--muted);margin-left:8px}
+.sum{margin-top:8px;font-size:18px}
+.sum .u{color:var(--urgent)}
+.warn{color:var(--urgent)}
+.hint{margin-top:6px;color:var(--muted);font-size:14px}
+section{margin-top:36px}
+h2{font-size:20px;font-weight:600;padding-bottom:8px;border-bottom:1px solid var(--line)}
+section.urgent h2{border-bottom:2px solid var(--urgent)}
+.none{margin-top:12px;color:var(--muted)}
+ul{list-style:none}
+li{padding:14px 0;border-bottom:1px solid var(--line)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px;color:var(--muted)}
+.biz{padding:0 8px;background:var(--biz,var(--fg));color:var(--bg);font-weight:600}
+.biz.none{background:none;color:var(--muted);border:1px solid var(--line);font-weight:400}
+.why{padding:0 8px;border:1px solid var(--muted)}
+.due{color:var(--urgent)}
+.what{margin-top:6px;font-size:18px}
+.what b{font-weight:600}
+.raw{margin-top:2px;color:var(--muted);font-size:14px}
+.act{margin-top:8px;display:flex;gap:10px}
+.act a,.act button{font:inherit;font-size:14px;padding:4px 14px;border:1px solid var(--muted);background:none;color:var(--fg);text-decoration:none;cursor:pointer}
+.act a{border-color:var(--fg)}
+.skipped .what{font-size:16px;color:var(--muted)}
+.skipped .what b{color:var(--fg)}
+.guess{padding:0 6px;border:1px dashed var(--muted);color:var(--muted);font-size:13px}
+.teach-label{margin-left:auto;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:6px}
+.teach{font:inherit;font-size:14px;padding:3px 6px;background:var(--bg);color:var(--fg);border:1px solid var(--line)}

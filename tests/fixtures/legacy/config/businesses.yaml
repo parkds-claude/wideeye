@@ -1,0 +1,63 @@
+# 사업 묶음. 등록한 방·계정·발신자가 1순위, keywords 는 보조. 카톡 chat_id 는 tools/kakao_rooms.py 로 채운다.
+my_aliases: ["대장님", "김민수", "민수님", "김대장", "김 대장"]
+my_addresses: ["minji@example.com", "main@example.com", "office@example.org", "snack@example.com", "hobby@example.com", "table@example.com"]
+my_phone_tails: []            # 내 번호 끝 4자리(문자에서 내가 보낸 것 판별 보조). 비워 두면 is_from_me 만 쓴다
+# 화면의 출처 꼬리표에 쓸 메일 계정 이름("메일 업무"). 순서 = 같은 메일이 여러 계정에 왔을 때 먼저 보일 계정
+mail_labels:
+  minji@example.com: 업무
+  main@example.com: workbase
+  office@example.org: 사무국
+  snack@example.com: snack
+  hobby@example.com: hobby
+# 같은 사람의 여러 채널을 한 사람으로 묶는다 — 메일로 묻고 카톡으로 답해도 '답함'으로 본다.
+# ids: 메일 주소 · 전화번호(+82…) · "kakao:<카톡 표시 이름>" · "telegram:<텔레그램 표시 이름>"
+contacts: []
+#  - name: 홍길동
+#    ids: ["hong@example.com", "kakao:홍길동 과장", "+821000000000"]
+# color: 화면에서 그 사업을 나타내는 형광색 — green(짙은 초록) · cyan(하늘) · pink(꽃분홍) · yellow(노랑) · violet(연보라).
+#   서로 확실히 다른 색만 쓴다(사용자 2026-10-13). lime(연두)은 노랑·초록과 헷갈리고 orange(주황)는 긴급 색이라 사업에 주지 않는다.
+businesses:
+  - key: spring-festival
+    color: violet
+    name: 봄 축제 준비
+    active: true
+    # 지난달에 끝난 행사 — 행사 이름이 적힌 것만 여기로 온다. '책방'·'문화진흥' 같은 넓은 말은 두지 않는다:
+    # 운영진의 기관 이름("… 책방 문화진흥 책방운영진")과 다음 달 행사 이름에도 들어 있어, 운영진 메일이 이 상자로 왔다.
+    keywords: ["봄맞이 축제", "봄맞이축제", "축제", "springfest"]
+  - key: bazaar2
+    color: yellow
+    name: 동네 합창 모임
+    active: true
+    telegram_chat_ids: [-100000000001, -100000000002]
+    kakao_chat_names: ["합창단_해오름-악보정리 소통방", "합창단_책마을&해오름"]
+    kakao_chat_ids: [100000000000001, 100000000000002]        # 방 이름이 바뀌어도 잡히게 (tools/kakao_rooms.py)
+    mail_accounts: ["office@example.org"]
+    keywords: ["합창단", "정기연주회", "합창", "동네연습회", "포장"]
+  - key: bookshop-team
+    color: cyan
+    name: 책방운영단
+    active: true
+    kakao_chat_names: ["🍎책마을-해오름 항공권 발권방", "책마을-해오름 항공권 발권방"]
+    kakao_chat_ids: [100000000000003]
+    # 다음 달 행사(확장개점 기념 북토크)와 운영진 일 전반. 지금 진행 중인 책방 일은 이쪽이다 — '책방'만 있어도 여기로 온다.
+    # 가장 긴 낱말이 걸린 사업이 이긴다: "봄맞이 축제"(7자)이 "책방운영진"(5자)보다 길어, 축제이라고 적힌 운영진 메일은 축제으로 간다.
+    keywords: ["책방운영단", "책방운영진", "운영진", "확장개점", "책방", "항공권", "항공", "발권", "책마을"]
+  - key: garden
+    color: green
+    name: 마을 정원 가꾸기
+    active: true
+    # 다음 달 시립정원관 대강당 포럼(공원·도시 분야). 같은 협의회의 입찰 건(정책설명회)은 아래 unconfirmed 가 더 긴 낱말로 가져간다.
+    keywords: ["정원조성", "구청정원", "생활녹지", "시립정원관"]
+  - key: calligraphy-club
+    color: pink
+    name: 동네 서예 동호회
+    active: true
+    keywords: ["서예", "동호회", "calligraphy"]
+
+# 아직 확정되지 않은 일(입찰 중 등) — 사업 상자를 차지하지 않는다. 이 낱말이 사업의 낱말보다 길게 걸리면 '개인 · 기타'로 간다
+# (가장 긴 낱말이 이긴다 — 위 사업의 넓은 말보다 길게 적을 것). 따내면 이 항목을 businesses 로 옮기고 색을 준다.
+unconfirmed:
+  - name: 구청 정책설명회 대행
+    # 정식 이름 "2026년 생활녹지 마을실천 사례 나눔 포럼 운영 대행"(지어낸 이름) — 제안평가 전(사용자 2026-10-14 "아직 확정된 사업이 아님.
+    # 개인·기타로 가야함"). 정원조성과 같은 협의회 일이라 '생활녹지'·'구청정원'(4자)만으로는 가려지지 않아 그보다 긴 낱말을 둔다.
+    keywords: ["생활녹지 마을실천", "생활녹지마을실천", "실천사례 나눔", "실천사례나눔", "정책설명회"]

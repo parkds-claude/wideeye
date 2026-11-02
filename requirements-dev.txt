@@ -1,0 +1,5 @@
+# 시험에만 쓰는 부품 — 실행에는 필요 없다(requirements.lock 에 넣지 않는다).
+#   깔기(설치가 만든 .venv — pip 가 없다): .tools/uv pip install --python .venv/bin/python -r requirements-dev.txt
+#   pip 가 있는 가상 환경이면: .venv/bin/python -m pip install -r requirements-dev.txt
+-r requirements.txt
+pytest>=8.0

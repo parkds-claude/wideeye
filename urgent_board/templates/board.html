@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ko" data-v="{{ v }}">
+<head>
+<meta charset="utf-8">
+<title>긴급현황판</title>
+<meta name="viewport" content="width=960, initial-scale=1">
+<link rel="stylesheet" href="/static/board.css">
+</head>
+<body>
+<main id="board" class="quiet loading">
+  <header id="head">
+    <h1 id="title" aria-live="polite"><span id="label">확인 중</span><b id="count"></b></h1>
+    <div id="info">
+      <div id="checked">&nbsp;</div>
+      <div id="down"></div>
+      <div id="hint"></div>
+    </div>
+    <div id="clock" aria-hidden="true"></div>
+  </header>
+  <section id="cards"></section>
+</main>
+<script src="/static/board.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>긴급현황판 — 설정 한눈에</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/static/settings.css">
+<link rel="stylesheet" href="/static/setup.css">
+</head>
+<body>
+{% set st = d.steps %}{% set ds = d.describe %}
+<main class="setup">
+  <header class="top">
+    <h1>설정 한눈에 <small>고치기는 AI 에게 — 아래 말을 복사해 쓰는 AI 창에 붙여 넣는다</small></h1>
+    <a class="btn" href="/setup">새로 읽기</a>
+  </header>
+  {% if d.settings_error %}<p class="notice bad">{{ d.settings_error }}</p>{% endif %}
+
+  <section>
+    <h2>설정 단계</h2>
+    {% if not st.left %}<p class="hint">필수 단계를 다 마쳤다.</p>{% endif %}
+    <ol class="steps">
+    {% for s in st.steps %}
+      <li class="{% if s.done %}done{% else %}todo{% endif %}">
+        <span class="mark">{% if s.done %}✓{% else %}○{% endif %}</span>
+        <span class="name">{{ s.title }}</span>
+        <span class="line">{{ s.line }}{% for n in s.notes %}<span class="note">{{ n }}</span>{% endfor %}</span>
+        {% if not s.done and s.todo %}<span class="next">다음: <code>{{ s.todo }}</code></span>{% endif %}
+      </li>
+    {% endfor %}
+    </ol>
+  </section>
+
+  <section id="ai">
+    <h2>AI 와 설정하기</h2>
+    <pre class="prompt" id="prompt">{{ d.prompt }}</pre>
+    <div class="row"><button class="btn" type="button" id="copy">복사</button><span class="hint" id="copied"></span></div>
+    <p class="hint">명령을 실행하는 AI(Claude Code · Codex · Gemini CLI 등): 어느 폴더에서 열어도 된다 — 붙여 넣으면 AI 가 안내서를 읽고 하나씩 묻는다.</p>
+    <p class="hint">명령을 못 돌리는 채팅 앱: AI 가 명령을 하나씩 주면 터미널에서 돌리고 결과를 붙여 넣는다.</p>
+  </section>
+
+  <section>
+    <h2>연결</h2>
+    {% if not ds.sources %}<p class="warn">켠 출처가 없다</p>{% endif %}
+    <ul class="srcs">
+    {% for r in ds.sources %}
+      <li><b>{{ r.name }}</b>{% if r.state in ("stopped", "reconnect") %}<span class="tag-bad">{{ r.state_text }}</span>{% if r.note %}<span class="hint">{{ r.note }}</span>{% endif %}{% else %}<span class="state">{{ r.state_text }}</span>{% endif %}</li>
+    {% endfor %}
+    </ul>
+  </section>
+
+  <section>
+    <h2>여섯 상자</h2>
+    <div class="six">
+    {% for b in ds.boxes %}
+      <div class="card c-{{ b.color or 'none' }}">
+        <div class="name">{{ b.name }}</div><span class="bar-line"></span>
+        <p class="about">{{ b.about or "설명 없음" }}</p>
+        {% set rules = [("메일 계정", b.accounts), ("보낸 사람", b.senders_named), ("방", b.rooms), ("낱말", b.keywords)] %}
+        {% for label, xs in rules if xs %}
+          <p class="rule"><span class="k">{{ label }}</span>{% for x in xs[:5] %}{% if x is mapping %}{{ x.name or x.id }}{% if x.watch %} 지켜봄{% endif %}{% else %}{{ x }}{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% if xs|length > 5 %} 외 {{ xs|length - 5 }}{% endif %}</p>
+        {% else %}
+          <p class="rule warn">기준 없음</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+    {% for i in range(5 - ds.boxes|length) %}
+      <div class="card empty"><p class="hint">빈 칸 — AI 에게 "상자를 더하자"</p></div>
+    {% endfor %}
+      <div class="card etc">
+        <div class="name">{{ ds.etc.name }}</div><span class="bar-line"></span>
+        <p class="about">어느 상자에도 안 걸린 것</p>
+        {% if ds.etc.senders_named %}<p class="rule"><span class="k">여기로 둘 사람</span>{% for x in ds.etc.senders_named[:5] %}{{ x.name or x.id }}{% if not loop.last %}, {% endif %}{% endfor %}{% if ds.etc.senders_named|length > 5 %} 외 {{ ds.etc.senders_named|length - 5 }}{% endif %}</p>{% endif %}
+        {% if ds.etc.accounts %}<p class="rule"><span class="k">개인 메일 계정</span>{{ ds.etc.accounts|join(", ") }}</p>{% endif %}
+        {% if ds.etc.watch_rooms %}<p class="rule"><span class="k">지켜보는 방</span>{{ ds.etc.watch_rooms|length }}개</p>{% endif %}
+      </div>
+    </div>
+    {% if ds.extra %}<p class="hint">쉬는 상자 · 넘친 상자: {% for b in ds.extra %}{{ b.name }}{% if not b.active %}(쉼){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  </section>
+
+  <section>
+    <h2>나</h2>
+    <p class="rule"><span class="k">나를 부르는 말</span>{{ ds.me.names|join(", ") or "없음" }}</p>
+    <p class="rule"><span class="k">내 메일 주소</span>{{ ds.me.addresses|join(", ") or "없음" }}</p>
+    {% if ds.unconfirmed %}<p class="rule"><span class="k">확정 전 일</span>{% for u in ds.unconfirmed %}{{ u.name }}{% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  </section>
+
+  <footer class="links"><a href="/settings">자세한 설정 화면</a><a href="/list">전체 목록</a><a href="/">현황판</a></footer>
+</main>
+<script>
+document.getElementById("copy").addEventListener("click", async () => {
+  const text = document.getElementById("prompt").textContent, out = document.getElementById("copied");
+  try { await navigator.clipboard.writeText(text); out.textContent = "복사했다 — 쓰는 AI 창에 붙여 넣는다."; }
+  catch (e) {
+    const r = document.createRange(); r.selectNodeContents(document.getElementById("prompt"));
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    out.textContent = "복사하지 못했다 — 골라 둔 글을 ⌘C 로 복사한다.";
+  }
+});
+</script>
+</body>
+</html>

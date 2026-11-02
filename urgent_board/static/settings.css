@@ -1,0 +1,150 @@
+:root{
+  --bg:#171717;--fg:#fafafa;--muted:#b4b4b4;--line:#2e2e2e;--shade:#0b0b0bcc;
+  --surface:#1e1e1e;--surface-2:#252525;--hover:#2c2c2c;--line-strong:#3a3a3a;--text-2:#d2d1cd;--field:#121212;
+  --neon-green:#00e054;--neon-lime:#c6ff00;--neon-orange:#ff9100;--neon-cyan:#2bb8ff;--neon-pink:#ff3d9a;--neon-yellow:#ffee00;--neon-violet:#b48cff;
+  --urgent:var(--neon-orange);--ok:#7fd396;--ok-bg:#16261b;--bad-bg:#2e2011;
+  --fs-s:14px;--fs-m:16px;--fs-l:20px;--fs-xl:28px;
+}
+/* 긴급현황판 — 설정 화면(맥, /settings). 디자인 문서 '설정 화면' 절. 2026-10-17 다시 꾸밈 — 사용자 "버튼등이 안이쁘고 가시성, 해설이 눈에 잘 들어오지 않음"
+   → 깔끔한 에디토리얼(minimalist-ui)을 어두운 바탕에 맞춘 것: 칸은 카드 한 장(1px 선 · 모서리 12px · 넉넉한 안쪽 여백), 항목 이름은 또렷하게(16px/600),
+   설명은 바로 아래 밝은 회색(--text-2) 16px 로 크게, 위쪽 칸 버튼은 한 덩어리 탭(고른 칸은 흰 바탕 · 검은 글자), 단추는 모서리 8px.
+   지키는 것(그대로): 색 값은 위 :root 에만 · 빨강 없음(문제는 주황) · 움직임 · 그림자 · 그라데이션 · 아이콘 없음 · 글자 14/16/20/28. */
+@font-face{font-family:"Pretendard Variable";src:url(/static/fonts/PretendardVariable.woff2) format("woff2");font-weight:45 920;font-display:swap}
+.c-green{--biz:var(--neon-green)}.c-cyan{--biz:var(--neon-cyan)}.c-pink{--biz:var(--neon-pink)}.c-yellow{--biz:var(--neon-yellow)}.c-violet{--biz:var(--neon-violet)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:Pretendard,"Pretendard Variable",-apple-system,system-ui,"Apple SD Gothic Neo",sans-serif;
+  font-size:var(--fs-m);line-height:1.6;-webkit-font-smoothing:antialiased;font-synthesis:none;word-break:keep-all}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--fg);text-underline-offset:3px}
+.wrap{max-width:1040px;margin:0 auto;padding:40px 32px 140px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+.loading{max-width:1040px;margin:0 auto;padding:40px 32px}
+
+/* 머리 — 제목은 크게 · 바짝, 부제는 그 아래 한 줄 */
+h1{font-size:var(--fs-xl);font-weight:600;letter-spacing:-.02em;line-height:1.2;grid-column:1/-1}
+h1 small{display:block;margin-top:8px;font-size:var(--fs-m);font-weight:400;letter-spacing:0;color:var(--text-2)}
+h2{font-size:var(--fs-l);font-weight:600;letter-spacing:-.01em;line-height:1.3;margin-top:36px;padding-top:28px;border-top:1px solid var(--line)}
+h2:first-child,.main>div>h2:first-child,.main>div>div:first-child>h2:first-child{margin-top:0;padding-top:0;border-top:0}
+h2+.hint{font-size:var(--fs-m);color:var(--text-2);margin-top:8px;max-width:760px}
+h3{font-size:var(--fs-m);font-weight:600;margin-top:20px}
+.hint{color:var(--text-2);font-size:var(--fs-s);line-height:1.65;margin-top:8px}
+.warn{color:var(--urgent)}
+.notice{margin-top:12px;padding:12px 16px;border:1px solid var(--line-strong);border-radius:8px;font-size:var(--fs-s);color:var(--text-2)}
+.notice.bad{border-color:var(--urgent);color:var(--urgent);background:var(--bad-bg)}
+
+/* 위쪽 칸 버튼 — 한 덩어리 탭. 고른 칸만 흰 바탕 · 검은 글자. 좁으면 다음 줄로. 위에 붙어 따라온다 */
+nav{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+nav button{background:none;border:0;border-radius:8px;padding:8px 18px;color:var(--text-2);cursor:pointer;font-size:var(--fs-m);font-weight:500}
+nav button:hover{background:var(--hover);color:var(--fg)}
+nav button.on{background:var(--fg);color:var(--bg);font-weight:600}
+
+/* 칸 내용은 카드 한 장(요약 칸처럼 둘이면 두 장) */
+.main{display:grid;gap:20px}
+.main>div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:32px 36px}
+.main>div>div{display:block}
+
+/* 입력 칸 — 이름은 또렷하게, 칸은 한 단 어둡게 */
+.field{display:block;margin-top:22px}
+.field>.label{display:block;font-size:var(--fs-m);font-weight:600;color:var(--fg);margin-bottom:8px;line-height:1.5}
+input[type=text],input[type=number],input[type=time],input[type=date],input[type=password],select,textarea{
+  background:var(--field);border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;width:100%;max-width:520px;font-size:var(--fs-m)}
+textarea{min-height:96px;line-height:1.6;max-width:760px}
+input:hover,select:hover,textarea:hover{border-color:var(--muted)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--fg)}
+.field.bad input,.field.bad select,.field.bad textarea{border-color:var(--urgent)}
+.problem{display:block;color:var(--urgent);font-size:var(--fs-s);margin-top:6px}
+.check{display:flex;gap:12px;align-items:flex-start;margin-top:14px;cursor:pointer;line-height:1.55}
+.check input{width:18px;height:18px;margin-top:3px;flex:none;accent-color:var(--fg);cursor:pointer}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:14px}
+.row .check{margin-top:0}
+.row>input[type=text],.row>input[type=password],.row>input[type=number]{width:auto;flex:1 1 180px;max-width:280px}     /* 한 줄에 여럿(텔레그램 api_id · api_hash · 전화번호) */
+input[type=number]{max-width:200px}
+
+/* 단추 — 모서리 8px. 평소는 한 단 밝은 면 + 선, 저장 단추만 흰 바탕 */
+.btn{background:var(--surface-2);border:1px solid var(--line-strong);border-radius:8px;padding:9px 18px;cursor:pointer;font-size:var(--fs-s);font-weight:500;color:var(--fg);line-height:1.3}
+.btn:hover{background:var(--hover);border-color:var(--muted)}
+.btn:active{background:var(--surface)}
+.btn:disabled,.btn:disabled:hover{opacity:.4;cursor:default;background:var(--surface-2);border-color:var(--line-strong)}
+.btn.primary{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+.btn.primary:hover{background:var(--muted);border-color:var(--muted)}
+.btn.primary:disabled,.btn.primary:disabled:hover{background:var(--fg);border-color:var(--fg)}
+.btn.small{padding:5px 12px}
+label.btn{display:inline-block}
+
+/* 칩 — 낱말 · 사람 · 방 */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line-strong);background:var(--surface-2);border-radius:999px;padding:4px 8px 4px 14px;font-size:var(--fs-s)}
+.chip .x{background:none;border:0;border-radius:999px;color:var(--muted);cursor:pointer;padding:0 6px;font-size:var(--fs-m);line-height:1}
+.chip .x:hover{background:var(--hover);color:var(--fg)}
+.chip .watch{color:var(--muted)}
+.chip.watching{border-color:var(--muted)}
+.adder{display:flex;gap:8px;margin-top:10px;max-width:520px}
+.adder input{flex:1}
+
+/* 상자의 작은 그림(세 칸 두 줄 — 탭5 상자와 같은 꼴) */
+.mini{display:grid;grid-template-columns:repeat(3,minmax(0,200px));gap:12px;margin-top:20px}
+.mini .box{height:72px;border:1px solid var(--line-strong);border-radius:10px;padding:12px 16px;overflow:hidden;background:var(--field)}
+.mini .name{font-size:var(--fs-m);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-line{display:block;width:36px;height:3px;border-radius:2px;background:var(--biz,var(--muted));margin-top:8px}
+
+/* 사업 칸(접힘/펼침) — 한 줄짜리 목록, 누를 수 있는 줄은 오른쪽에 › */
+.biz{border:1px solid var(--line-strong);border-radius:10px;margin-top:12px;background:var(--field);overflow:hidden}
+.biz>header{display:flex;gap:12px;align-items:center;padding:14px 18px;cursor:pointer}
+.biz>header:hover{background:var(--hover)}
+.biz>header::after{content:"›";color:var(--muted);font-size:var(--fs-l);line-height:1;margin-left:4px}
+.biz>header .dot{width:12px;height:12px;border-radius:50%;background:var(--biz,var(--muted));flex:none}
+.biz>header .name{font-weight:600}
+.biz>header .sum{color:var(--text-2);font-size:var(--fs-s);margin-left:auto}
+.biz>.body{padding:4px 18px 22px;border-top:1px solid var(--line)}
+.biz.off>header .name{color:var(--muted)}
+.biz:has(>.body)>header::after{content:"⌄";font-size:var(--fs-m)}                                        /* 펼친 줄 */
+.biz>.body input[type=text],.biz>.body input[type=number],.biz>.body select,.biz>.body textarea{background:var(--surface)}   /* 펼친 칸 안의 입력 칸은 한 단 밝게 — 바탕과 섞이지 않게 */
+.colors{display:flex;gap:12px;margin-top:8px}
+.colors button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;background:var(--biz);cursor:pointer;padding:0;outline:2px solid var(--field)}
+.colors button.on{border-color:var(--fg)}
+.colors button:disabled{opacity:.35;cursor:default}
+
+/* 판(목록에서 고르기 · 미리 보기 · 확인) */
+.shade{position:fixed;inset:0;background:var(--shade);display:flex;align-items:flex-start;justify-content:center;padding-top:8vh;z-index:10}
+.panel{width:680px;max-width:calc(100vw - 32px);max-height:80vh;overflow:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:28px 32px}
+.panel h2{margin-top:0;padding-top:0;border-top:0}
+.panel .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+.pick{list-style:none;margin-top:12px}
+.pick li{display:flex;gap:10px;align-items:baseline;padding:10px 8px;border-bottom:1px solid var(--line);border-radius:6px;cursor:pointer}
+.pick li:hover{background:var(--hover)}
+.pick li .meta{color:var(--text-2);font-size:var(--fs-s);margin-left:auto;white-space:nowrap}
+table.pre{width:100%;border-collapse:collapse;margin-top:12px;font-size:var(--fs-s)}
+table.pre th,table.pre td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.pre th{color:var(--text-2);font-weight:600}
+table.pre td.same{color:var(--muted)}
+.moved{list-style:none;margin-top:10px;font-size:var(--fs-s)}
+.moved li{padding:6px 0;border-bottom:1px solid var(--line)}
+.moved .who{font-weight:600}
+.moved .to{color:var(--text-2)}
+
+/* 연결 칸 — 출처 이름과 상태가 머리줄, 그 아래 계정 줄 · 안내 · 단추 */
+.src .head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding-bottom:16px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.src .head b{font-size:var(--fs-l);font-weight:600;letter-spacing:-.01em}
+.src>.row{margin-top:14px}
+.src>.row:has(>.state){padding:12px 0;margin-top:0;border-bottom:1px solid var(--line)}      /* 계정 줄(이름 · 상태 · 끊기) — 끊기는 오른쪽 끝에 맞춘다 */
+.src>.row:has(>.state)>.btn:last-child{margin-left:auto}
+.src>p.state{margin-top:14px}
+.src .state{color:var(--text-2);font-size:var(--fs-s)}
+.tag-bad{display:inline-block;background:var(--urgent);color:var(--bg);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:600;letter-spacing:.01em}
+.src .hint{font-size:var(--fs-m)}
+.src ol{margin:14px 0 0 22px;color:var(--text-2);font-size:var(--fs-m);line-height:1.75}
+.src ol li{padding-left:4px;margin-top:4px}
+.src .hint.warn{color:var(--urgent);background:var(--bad-bg);border-radius:8px;padding:8px 12px;font-size:var(--fs-s)}
+code{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:13px;color:var(--text-2)}
+.wrap code{background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:1px 6px}      /* 설정 화면에서만 — '설정 한눈에'(setup.css)의 긴 명령 줄에는 테두리를 두지 않는다 */
+
+/* 분류 시험 */
+.classify .out{margin-top:12px}
+.classify .out .boxname{border-bottom:3px solid var(--biz,var(--muted));padding-bottom:1px}
+
+/* 맨 아래에 붙은 띠 */
+.footer{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line)}
+.footer .in{max-width:1040px;margin:0 auto;padding:14px 32px;display:flex;gap:14px;align-items:center}
+.footer .count{color:var(--text-2)}
+.footer .count.dirty{color:var(--fg);font-weight:600}
+.footer .say{font-size:var(--fs-s);color:var(--text-2)}
+.footer .grow{flex:1}
