@@ -58,6 +58,21 @@ static temperature_sensor_handle_t s_tsens = nullptr;
     video::present_primary();
     for (;;) vTaskDelay(pdMS_TO_TICKS(1000));
 }
+// RL-D2 되풀이 재시작으로 섰다 — 안내를 띄우고 RETRY_MS 뒤 스스로 한 번 더 해 본다(소프트 재시작이라 패닉으로 세지 않는다 → 서지 않고 켜 본다.
+//   또 곧바로 죽으면 다시 여기로 온다). 전에는 사람이 전원을 껐다 켜거나 시리얼 `reboot` 을 보낼 때까지 영영 섰다(2026-11-03 겪음).
+//   그리기 쪽(디코더 · 파이프라인)은 아직 시작하지 않았으므로 재시작 직전에 세울 것이 없다(park_video_before_reset 불필요).
+[[noreturn]] static void halt_then_retry(const char *what, ui::Fault fault, int orient)
+{
+    printf("MON FAIL %s (retry in %d s)\n", what, (int)(rec::CRASH_RETRY_MS / 1000)); fflush(stdout);
+    video::freeze(0);
+    ui::draw_fault(video::primary_buffer(), orient, fault);
+    video::present_primary();
+    const int64_t until = now_ms() + rec::CRASH_RETRY_MS;
+    while (now_ms() < until) vTaskDelay(pdMS_TO_TICKS(1000));
+    printf("MON RETRY %s\n", what); fflush(stdout);
+    vTaskDelay(pdMS_TO_TICKS(200));
+    esp_restart();
+}
 // 부팅 때 꼭 있어야 하는 것을 만들지 못했다 → 재시작해 본다(상한까지). 다 썼으면 화면에 알리고 선다. 돌아오지 않는다.
 //   ESP_ERROR_CHECK·assert 로 죽게 두면 횟수 제한 없이 몇 초마다 재부팅하는 고리가 된다 — MN-D17 이 막으려는 바로 그것이다.
 //   고장 안내는 video::init 이 실패했어도(또는 아직 안 불렸어도) 그려진다: M5GFX 가 켠 패널의 0번 버퍼에 직접 그린다.
@@ -243,8 +258,26 @@ extern "C" void app_main(void)
     const esp_reset_reason_t why = esp_reset_reason();
     const bool was_crash = why == ESP_RST_PANIC || why == ESP_RST_INT_WDT || why == ESP_RST_TASK_WDT || why == ESP_RST_WDT || why == ESP_RST_CPU_LOCKUP;
     const int stored_panics = cfg_get("rst_panic", 0);
-    const rec::CrashBoot crash = rec::crash_boot(stored_panics, was_crash, why == ESP_RST_POWERON);
+    // RL-D1 그 전 실행이 3분 넘게 돌았나(board_session 이 문턱마다 up_mark 를 적는다) — 오래 돈 뒤의 패닉 · 워치독은 잇달음이 아니다
+    const int prev_up = cfg_get_in("up_mark", 0, 0, 4);
+    if (prev_up) cfg_set("up_mark", 0);
+    const rec::CrashBoot crash = rec::crash_boot(stored_panics, was_crash, why == ESP_RST_POWERON, prev_up >= 1);
     if (crash.count != stored_panics) cfg_set("rst_panic", crash.count);
+    // RL-D3 부팅 기록(최근 HIST_N 번): 하드웨어 리셋 까닭의 원래 번호 · IDF 까닭 · 그 전 실행 길이 — 시리얼 `boot` 가 BOOTHIST 로 찍는다.
+    //   2026-11-03 탭5 가 워치독 리셋을 잇달아 겪었는데 그 순간의 기록이 없어 까닭을 좁히지 못했다(맥 쪽 기록에도 남지 않았다)
+    const int hw_reason = (int)esp_rom_get_reset_reason(0);
+    {
+        const int at = cfg_get_in("hist_n", 0, 0, 1 << 30);
+        char key[8];
+        snprintf(key, sizeof key, "h%d", at % rec::HIST_N);
+        cfg_set(key, rec::hist_pack(hw_reason, (int)why, prev_up));
+        cfg_set("hist_n", at + 1);
+        int32_t hist[rec::HIST_N];
+        for (int i = 0; i < rec::HIST_N; ++i) { snprintf(key, sizeof key, "h%d", i); hist[i] = cfg_get(key, 0); }
+        g_recent_crashes.store(rec::recent_crashes(hist, rec::HIST_N));
+    }
+    static_assert(ESP_RST_PANIC == 4 && ESP_RST_INT_WDT == 5 && ESP_RST_TASK_WDT == 6 && ESP_RST_WDT == 7 && ESP_RST_CPU_LOCKUP == 15,
+                  "rec::crash_reason 의 번호가 IDF 와 다르다");
     if (crash.fresh_start) for (const char *key : {"rst_stuck", "rst_video", "rst_panel"}) if (cfg_get(key, 0)) cfg_set(key, 0);
 
     // 화면이 안 잡히면(소프트 리셋 뒤 패널 감지가 가끔 실패한다) 재시작한다 — 3번까지
@@ -289,10 +322,11 @@ extern "C" void app_main(void)
 
     // 패닉이 잇달았다 → 그리기 쪽(디코더)을 아예 시작하지 않고 선다. 시리얼은 듣는다: `reboot` 하면 한 번 더 해 본다
     if (crash.halt) {
-        snprintf(s_boot_line, sizeof s_boot_line, "halted: %d crash resets in a row (reset reason %d) reset=%d panics=%d", (int)crash.count, (int)why, (int)why, (int)crash.count);
+        snprintf(s_boot_line, sizeof s_boot_line, "halted: %d crash resets in a row (reset reason %d) reset=%d panics=%d hw=0x%x prev=%d retry_s=%d",
+                 (int)crash.count, (int)why, (int)why, (int)crash.count, hw_reason, prev_up, (int)(rec::CRASH_RETRY_MS / 1000));
         printf("MON BOOT %s\n", s_boot_line);                      // 서 있는 동안에도 시리얼 `boot` 가 켜진 까닭을 돌려준다(MN-D29)
         spawn(serial_task, "sercmd", 4 * 1024, 3, 0, 0);           // 못 띄워도 선다(시리얼만 없다)
-        halt_with_notice("crash-loop", ui::Fault::STUCK, orient);
+        halt_then_retry("crash-loop", ui::Fault::STUCK, orient);
     }
 
     // 현황판 그림 칸 둘(받는 칸 · 보이는 칸). 못 잡으면 초기화 실패(상한 있는 재시작 → 안내)
@@ -301,10 +335,10 @@ extern "C" void app_main(void)
     const bool video_ok = video::init() && boot_inj != 1;
     // 부팅 줄은 보관해 둔다: 시리얼 `boot` 가 `BOOTINFO …` 로 다시 찍는다 — 재부팅 직후의 줄은 맥이 포트를 다시 붙이는 동안 잘릴 수 있어(인계 문서 3-16),
     //   기기 시험이 "어떻게 켜졌나(reset=)"를 그 줄에만 기대면 증거 없이 통과한다(사전 검토 3a T-6)
-    snprintf(s_boot_line, sizeof s_boot_line, "fw=wideeye video=%d panel=%dx%d fbs=%d range=%s mono=%d orient=%d bri=%d last_rst=%s rst=%d panics=%d reset=%d heap_int=%u blk=%u",
+    snprintf(s_boot_line, sizeof s_boot_line, "fw=wideeye video=%d panel=%dx%d fbs=%d range=%s mono=%d orient=%d bri=%d last_rst=%s rst=%d panics=%d reset=%d hw=0x%x prev=%d heap_int=%u blk=%u",
            (int)video_ok, (int)M5.Display.width(), (int)M5.Display.height(),
            video::panel_count(), video::full_range() ? "full" : "limited", (int)video::mono(), orient, g_bri.load(),
-           rec::cause_name((rec::Cause)last_rst), n_stuck, (int)crash.count, (int)why,
+           rec::cause_name((rec::Cause)last_rst), n_stuck, (int)crash.count, (int)why, hw_reason, prev_up,
            (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA));
     printf("MON BOOT %s\n", s_boot_line);
     if (video_ok && video::panel_count() < 3) printf("MON WARN fbs=%d - M5GFX frame buffer patch missing (tools/patch_m5gfx_fbs.py)\n", video::panel_count());

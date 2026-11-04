@@ -81,6 +81,7 @@ inline std::atomic<int>      g_board_state{0};                       // rec::Boa
 inline std::atomic<bool>     g_board_alarm{false};                   // "현황판이 오지 않습니다"를 띄우는 중
 inline std::atomic<int64_t>  g_board_live_since_ms{0};               // LIVE 가 시작된 때(0 = LIVE 아님) — 횟수 지우기(MN-D36)
 inline std::atomic<int64_t>  g_boot_ms{0};
+inline std::atomic<int>      g_recent_crashes{0};        // 부팅 기록 8칸 가운데 비정상 리셋 수 — STAT crashes=(RL-D3)
 inline std::atomic<uint32_t> g_board_decfail{0};                     // 풀지 못한 현황판 그림(부팅 뒤 누적 — STAT bdec)
 
 // 고장 넣기(시리얼 `fault …` — 복구 경로를 기기에서 확인하는 용도. 평소에는 모두 0)

@@ -145,6 +145,41 @@ int main()
         CHECK(!crash_boot(3, true, true).fresh_start);                            // 까닭이 둘 다로 읽히면(있을 수 없지만) 지우지 않는 쪽
         CHECK(crash_boot(-7, false, false).count == 0 && crash_boot(2000000000, true, false).count == 2000000000);   // 깨진 저장값 · 넘치지 않는다
     }
+    // 28b. RL-D1 — 3분 넘게 돈 실행 뒤의 패닉 · 워치독은 "잇달아"가 아니다(2026-11-03 맥북 덮개 닫기 · 다시 켜기 무렵 띄엄띄엄 6번 → 섰다)
+    {
+        int32_t n = 0;
+        for (int i = 0; i < 10; ++i) {                                            // 몇 시간 간격의 워치독 리셋 열 번 — 늘 1, 서지 않는다
+            const CrashBoot c = crash_boot(n, true, false, /*prev_alive=*/true);
+            CHECK(c.count == 1 && !c.halt);
+            n = c.count;
+        }
+        CrashBoot c = crash_boot(n, true, false, false);  CHECK(c.count == 2 && !c.halt);   // 켜지자마자 또 죽으면 잇달음으로 센다
+        c = crash_boot(c.count, true, false, false);       CHECK(c.count == 3 && !c.halt);
+        c = crash_boot(c.count, true, false, false);       CHECK(c.count == 4 && c.halt);    // 진짜 되풀이는 여전히 선다
+        const CrashBoot retry = crash_boot(c.count, false, false, false);                    // RL-D2: 선 뒤 스스로 한 소프트 재시작 — 서지 않고 해 본다
+        CHECK(retry.count == 4 && !retry.halt);
+        CHECK(crash_boot(retry.count, true, false, false).halt);                             // 또 곧바로 죽으면 다시 선다
+        const CrashBoot ok = crash_boot(retry.count, false, false, true);                     // 다시 켠 뒤 3분 넘게 돌고 우리가 청해 다시 켰다 → 지운다
+        CHECK(ok.count == 0 && !ok.halt && !ok.fresh_start);
+        CHECK(crash_boot(5, true, false, true).count == 1);                                  // 쌓인 수가 있어도 오래 돈 뒤의 패닉은 1 부터
+        CHECK(crash_boot(3, false, false).count == 3);                                       // 짧게 돈 뒤의 소프트 재시작은 세지도 지우지도 않는다(옛 판과 같다)
+    }
+    // 28c. RL-D3 — 실행 길이 표지와 부팅 기록 칸
+    {
+        CHECK(up_mark(0) == 0 && up_mark(CRASH_ALIVE_MS - 1) == 0 && up_mark(CRASH_ALIVE_MS) == 1);
+        CHECK(up_mark(30 * 60000LL) == 2 && up_mark(3 * 3600000LL) == 3 && up_mark(24 * 3600000LL) == 4 && up_mark(400LL * 24 * 3600000LL) == 4);
+        CHECK(!hist_unpack(0).valid);                                                        // 빈 칸
+        const HistEntry e = hist_unpack(hist_pack(0x12, 7, 2));
+        CHECK(e.valid && e.hw == 0x12 && e.why == 7 && e.prev_up == 2);
+        const HistEntry z = hist_unpack(hist_pack(0, 0, 0));                                 // 모든 칸이 0 이어도 빈 칸과 가려진다
+        CHECK(z.valid && z.hw == 0 && z.why == 0 && z.prev_up == 0);
+        CHECK(CRASH_RETRY_MS == 15 * 60000 && CRASH_ALIVE_MS < CRASH_RETRY_MS);
+        // 비정상 리셋 번호(IDF esp_reset_reason_t): PANIC 4 · INT_WDT 5 · TASK_WDT 6 · WDT 7 · CPU_LOCKUP 15. 전원 1 · 소프트 3 · 브라운아웃 9 · USB 11 은 아니다
+        CHECK(crash_reason(4) && crash_reason(5) && crash_reason(6) && crash_reason(7) && crash_reason(15));
+        CHECK(!crash_reason(0) && !crash_reason(1) && !crash_reason(3) && !crash_reason(9) && !crash_reason(11) && !crash_reason(14));
+        int32_t h[HIST_N] = {hist_pack(0x15, 7, 1), hist_pack(0xc, 3, 2), hist_pack(0x15, 7, 1), 0, hist_pack(1, 1, 0), hist_pack(0x15, 4, 1), 0, 0};
+        CHECK(recent_crashes(h, HIST_N) == 3);                                               // 빈 칸 · 소프트 · 전원은 세지 않는다
+    }
     // 24. 까닭 이름은 모두 다르고 비어 있지 않다(다음 부팅 줄에 찍힌다)
     {
         bool ok = true;

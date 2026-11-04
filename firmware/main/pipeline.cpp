@@ -28,14 +28,14 @@ static void send_shot()
     }
     printf("SHOT END\n"); fflush(stdout);
 }
-// 맥(urgent-board tools/tab5_link.py)은 board= bseq= scr= bage= 를 꼭 읽고 temp= orient= 를 읽는다. 나머지는 진단용이다
+// 맥(urgent-board tools/tab5_link.py)은 board= bseq= scr= bage= 를 꼭 읽고 temp= orient= crashes= 를 읽는다(crashes 는 RL-D3 — 부팅 기록 8칸 가운데 비정상 리셋). 나머지는 진단용이다
 static void print_stat(const mon::Stats &st, int64_t win_ms)
 {
     const float sec = win_ms > 0 ? win_ms / 1000.0f : 1.0f;
     const uint32_t n = st.out ? st.out : 1, m = st.in ? st.in : 1;
     printf("STAT up=%lld path=%s in=%.1f out=%.1f decfail=%u dec_ms=%.1f rot_ms=%.1f flip_ms=%.1f busy_ms=%.1f kb=%u kbmax=%u "
            "tokto=%u rej=%u rejwhy=%s temp=%.1f tbrd=%.1f heat=%s bri=%d heap_int=%u blk=%u psram=%u "
-           "board=%s bseq=%u scr=%d bage=%d bdec=%u orient=%d\n",
+           "board=%s bseq=%u scr=%d bage=%d bdec=%u orient=%d crashes=%d\n",
            (long long)(now_ms() / 1000), video::last_path(),
            st.in / sec, st.out / sec, (unsigned)st.dec_fail,
            st.dec_us / 1000.0f / n, st.rot_us / 1000.0f / n, st.flip_us / 1000.0f / n, st.busy_us / 1000.0f / n,
@@ -46,7 +46,7 @@ static void print_stat(const mon::Stats &st, int64_t win_ms)
            (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM),
            rec::board_name((rec::Board)g_board_state.load()), (unsigned)g_board_drawn_seq.load(), (int)(g_screen_off_ms.load() == 0),
            g_board_drawn_content_ms.load() ? (int)((now_ms() - g_board_drawn_content_ms.load()) / 1000) : -1, (unsigned)g_board_decfail.load(),
-           g_orient.load());     // 방향 — 맥이 세로면 세로 화면을 눕혀 보낸다(MN-D41). 칸이 없으면 맥은 가로로 본다
+           g_orient.load(), g_recent_crashes.load());     // 방향 — 맥이 세로면 세로 화면을 눕혀 보낸다(MN-D41). 칸이 없으면 맥은 가로로 본다
     fflush(stdout);
 }
 // 오래 걸리는 일(bench · shot) 동안 멈춤 감시가 물지 않게 "이때까지는 일하는 중"이라고 적어 둔다

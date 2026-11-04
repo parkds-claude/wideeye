@@ -169,6 +169,10 @@ last = s.get("last_ok_at")
 print(f"{ok(last and time.time() - last < 300)}  보낸 그림 {s.get('frames_ok', 0)}장 · 실패 {s.get('frames_err', 0)}" + (f" · 마지막 성공 {time.time() - last:.0f}초 전" if last else " · 아직 없음"))
 if t:
     print(f"{ok(t.get('board') in ('live', 'sleep'))}  탭5: board={t.get('board')} · 그린 그림 {t.get('bseq')} · 화면 {'켬' if t.get('scr') else '끔'} · 그림 나이 {t.get('bage')}초 · 온도 {t.get('temp')}°C")
+if (t.get("crashes") or 0) >= 3:              # RL-D3 — 3분보다 긴 주기로 되풀이되는 리셋은 서지 않으므로 여기서 알린다
+    print(f"주의  탭5 가 최근 8번 켜질 때 {t['crashes']}번 비정상으로 다시 켜졌다 — 선(USB) · 전원을 보고, 이어지면 tools/kiosk.sh tab5 -- run boot 의 BOOTHIST 를 본다")
+if s.get("halted"):                            # RL-D4 — 탭5 가 되풀이 재시작 막기로 서 있다(창이 15분에 한 번 reboot 을 보낸다 · 새 펌웨어는 스스로도 다시 해 본다)
+    print(f"주의  탭5 가 서 있다(비정상 재시작이 잇달았다): {s['halted'][:120]} — 창이 17분에 한 번 다시 켠다. 곧바로 풀려면 tools/kiosk.sh tab5 -- run reboot")
 o = s.get("orient")                            # 탭5 가 STAT 으로 알린 방향(세로 화면 — 설계 2026-10-18 D3). 없으면 방향을 알리지 않는 펌웨어 = 가로
 name = {0: "가로", 1: "세로", 2: "가로 — 뒤집힘", 3: "세로 — 뒤집힘"}.get(o)
 print(f"참고  탭5 방향: {name} (orient={o})" if name else "참고  탭5 방향: 모름(방향을 알리지 않는 펌웨어면 가로로 그린다)")

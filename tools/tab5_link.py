@@ -24,6 +24,9 @@ SCREEN_EVERY = 30.0           # screen 신호 간격
 REPLY_TIMEOUT = 3.0           # 답을 기다리는 한도
 WRITE_TIMEOUT = 2.0           # 쓰기가 막히는 한도(탭5 가 멈춰 USB 가 NAK 만 낼 때)
 UNKNOWN_REST = 300.0          # 펌웨어가 frame 을 모르면 이만큼 쉰다
+BUSY_PROBE = 3                # RL-D4 그림이 이만큼 잇달아 busy 로 거절되면 탭5 가 서 있는지 묻는다(시리얼 `boot`)
+HALT_KICK_GAP = 17 * 60.0     # RL-D4 서 있는 탭5 에 `reboot` 을 보내는 최소 간격 — 펌웨어도 15분 뒤 스스로 해 본다(RL-D2, 옛 펌웨어는 영영 선다).
+                              #   17분으로 어긋나게 해 두 다시 켜기가 겹치지 않게(독립 검토 2026-11-03)
 RESEND_GAP = 30.0             # 탭5 가 그린 그림이 없다고(STAT bseq=0) 할 때 같은 그림을 다시 보내는 최소 간격(MON BOOT 에는 곧바로)
 STATE_EVERY = 30.0            # 상태 파일을 적는 간격(바뀔 때도 적는다)
 BACKOFF = (2, 4, 8, 16, 30)   # 붙어 있는데 열기 · 주고받기가 잇달아 실패할 때 다시 하는 간격(초)
@@ -75,6 +78,8 @@ def parse_stat(line: str) -> dict | None:
         return None
     o = f.get("orient", "")
     st["orient"] = int(o) if o.isdigit() and int(o) <= 3 else None
+    c = f.get("crashes", "")
+    st["crashes"] = int(c) if c.isdigit() else None              # RL-D3 부팅 기록 8칸 가운데 비정상 리셋(칸이 없는 펌웨어면 None)
     return st
 
 
@@ -171,9 +176,12 @@ class Tab5Link:
         self._rest_until = float("-inf")
         self._fails = 0
         self._absent = False                                     # 앞서 탭5 가 USB 목록에 없었다(다시 붙으면 쉼 간격을 처음부터)
+        self._busy = 0                                           # 그림이 busy 로 잇달아 거절된 수(RL-D4)
+        self._kicked_at = float("-inf")                          # 서 있는 탭5 에 마지막으로 reboot 을 보낸 때(wall)
         self._st = {"connected": False, "paused": False, "port": None, "frames_ok": 0, "frames_err": 0, "reconnects": 0,
                     "last_ok_at": None, "last_error": None, "tab5": None, "sent_seq": 0, "screen": True,
-                    "orient": remembered_orient(self.state_dir)}       # 탭5 의 방향 — 첫 STAT 이 오면 그 값으로(칸이 없으면 None = 가로)
+                    "orient": remembered_orient(self.state_dir),   # 탭5 의 방향 — 첫 STAT 이 오면 그 값으로(칸이 없으면 None = 가로)
+                    "halted": None}                              # RL-D4 탭5 가 되풀이 재시작으로 서 있으면 그 부팅 줄(doctor 가 알린다)
 
     # ── 메인 스레드가 부르는 것 ──
     def start(self) -> None:
@@ -411,6 +419,10 @@ class Tab5Link:
                 self._port.write(head)
                 kind, ok, rest = self._wait(rid, "frame-begin", "frame", sent=head.decode())   # 거절은 `ERR frame <id> …` 로 온다
                 if not (ok and kind == "frame-begin"):
+                    if "busy" in rest:                   # 받을 칸이 없다 — 앞 그림을 그리는 중이거나, 탭5 가 서 있다(그리기 쪽이 시작되지 않았다)
+                        self._busy += 1
+                        if self._busy >= BUSY_PROBE:
+                            self._probe_halted()
                     raise RuntimeError(f"frame 거절: {rest}")
                 for i, c in enumerate(chunks, 1):
                     self._port.write(c)
@@ -423,7 +435,13 @@ class Tab5Link:
             except _Unknown:
                 return self._rest("탭5 펌웨어가 frame 을 모른다(펌웨어를 올려야 한다)")
             if ok:
+                self._busy = 0
+                cleared = bool(self._st["halted"])
                 self._st["frames_ok"] += 1; self._st["sent_seq"] = rid; self._st["last_ok_at"] = self.wall()
+                if cleared:
+                    self.log("탭5 가 다시 그림을 받는다(서 있던 상태가 풀렸다)")
+                    self._st["halted"] = None
+                    self._write_state()                  # 곧바로 — doctor 가 낡은 '서 있다'를 알리지 않게
                 self._need_frame, self._sent_at = False, self.clock()
                 if self._st["frames_ok"] == 1:
                     self.log(f"탭5 에 첫 그림을 보냈다({len(jpeg)} B)")
@@ -431,6 +449,33 @@ class Tab5Link:
             self._st["frames_err"] += 1
             if "crc" not in rest or attempt == 2:
                 raise RuntimeError(f"그림 실패: {rest}")
+
+    def _probe_halted(self) -> None:
+        """RL-D4 — 그림이 잇달아 busy 로 거절된다. 탭5 가 되풀이 재시작 막기로 서 있는지 시리얼 `boot` 로 묻고(답 `BOOTINFO halted: …`),
+        서 있으면 상태 파일에 적고(doctor 가 알린다) HALT_KICK_GAP 에 한 번 `reboot` 을 보낸다 — 소프트 재시작은 패닉으로 세지 않으므로
+        펌웨어는 서지 않고 다시 해 본다(정말 되풀이면 곧 다시 선다). 2026-11-03 탭5 가 서 있는 동안 이 창은 30초마다 다시 연결만 했고
+        사람이 보기 전까지 아무도 알리지 않았다."""
+        self._port.write(b"boot\n")
+        end, info = self.clock() + REPLY_TIMEOUT, None
+        while self.clock() < end and info is None:
+            line = self._readline()
+            if line is None:
+                continue
+            self._watch(line)
+            if line.startswith("BOOTINFO "):
+                info = line[len("BOOTINFO "):].strip()
+        if info is None or not info.startswith("halted:"):
+            return
+        first = self._st["halted"] is None
+        self._st["halted"] = info[:200]
+        if self.wall() - self._kicked_at >= HALT_KICK_GAP:
+            self._kicked_at = self.wall()
+            self.log(f"탭5 가 되풀이 재시작 막기로 서 있다({info[:120]}) — 다시 켠다(reboot)")
+            self._port.write(b"reboot\n")
+            self._busy = 0
+        elif first:
+            self.log(f"탭5 가 되풀이 재시작 막기로 서 있다({info[:120]}) — {HALT_KICK_GAP / 60:.0f}분 안에 다시 켠 적이 있어 기다린다")
+        self._write_state()
 
     def _rest(self, why: str) -> None:
         """보내 봐야 안 되는 까닭이 있다 — 한동안 보내지 않는다(끝없이 거절당하는 고리를 돌지 않게)."""

@@ -209,7 +209,7 @@ AI 에게 주는 글이라 읽지 않아도 돼요.
 > "WideEye 를 이 맥에 까는 한 줄이에요. 인터넷에서 WideEye 설치 프로그램을 받아 바로 실행해요. 이 설치 프로그램 자체는 WideEye 를 만든 사람들을 믿고 받는 거예요 — 먼저 읽어 보고 싶으면 이 줄 속의 주소를 브라우저로 열어 볼 수 있어요. 설치 프로그램은 이 맥의 당신 사용자 폴더에만 깔고, 관리자 암호는 묻지 않아요. 그 뒤로 받는 것마다 미리 정해 둔 값(지문)과 맞는지 확인하고, 맞지 않으면 멈춰요. 몇 분 걸려요. 해도 될까요?"
 
 ```
-curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.2.0/install/wideeye-install.sh | sh
+curl -fsSL https://github.com/parkds-claude/wideeye/raw/v0.2.1/install/wideeye-install.sh | sh
 ```
 
 - 이 줄을 바꾸거나 앞뒤에 다른 말을 붙이지 마세요. 관리자 권한으로 돌리지 않아요.

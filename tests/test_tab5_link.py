@@ -12,7 +12,7 @@ class FakePort:
     """탭5 펌웨어 흉내: frame/조각/frameend/screen 에 규약(설계서 2-5)대로 답하고, 받은 그림을 모은다.
     확인 줄 앞에는 STAT 줄의 꼬리가 붙어 온다 — 답을 줄 어디에서든 찾는지 본다."""
 
-    def __init__(self, *, unknown=False, crc_bad_once=False, refuse_begin=False, garble_head_once=False):
+    def __init__(self, *, unknown=False, crc_bad_once=False, refuse_begin=False, garble_head_once=False, halted=False):
         self.out = bytearray(); self.inbuf = b""; self.closed = False
         self.frames = []; self.screens = []; self.rx = None; self.lock = threading.Lock()
         self.unknown, self.crc_bad_once, self.refuse_begin = unknown, crc_bad_once, refuse_begin
@@ -22,6 +22,10 @@ class FakePort:
         self.ages = []                                          # 머리 줄의 나이 칸(ms)
         self.on_screen = None                                   # screen 을 받았을 때 부를 것(답하기 전)
         self.orient = None                                      # 확인 줄 앞 STAT 꼬리에 실을 방향(None = 옛 펌웨어 — 칸이 없다)
+        self.halted = halted                                    # 되풀이 재시작 막기로 선 펌웨어 — 그림은 busy, `boot` 는 halted 줄(RL-D4)
+        self.reboots = 0
+        self.boots = 0                                          # `boot` 질의를 받은 수
+        self.stays_halted = False                               # reboot 해도 또 곧바로 선다(진짜 되풀이)
 
     def write(self, b):
         with self.lock:
@@ -50,6 +54,14 @@ class FakePort:
         if self.garble_head_once and p[0] == "frame":           # 머리 줄의 글자 몇 개가 선에서 사라졌다 → 펌웨어는 모르는 명령으로 본다
             self.garble_head_once = False
             return self._say(f"ERR unknown '{' '.join(p[:2])}' (help)")
+        if p[0] == "boot":
+            self.boots += 1
+            return self._say("BOOTINFO halted: 6 crash resets in a row (reset reason 7) reset=7 panics=6" if self.halted
+                             else "BOOTINFO fw=wideeye video=1 panics=0 reset=3")
+        if p[0] == "reboot":
+            self.reboots += 1
+            self.halted = self.stays_halted
+            return self._say("OK reboot")
         if p[0] == "screen":
             self.screens.append(int(p[2]))
             if self.on_screen is not None:
@@ -57,7 +69,7 @@ class FakePort:
             return self._say(f"OK screen {p[1]} {p[2]}")
         if p[0] == "frame":
             self.begins += 1
-            if self.refuse_begin:
+            if self.refuse_begin or self.halted:
                 return self._say(f"ERR frame {p[1]} busy")
             self.ages.append(int(p[4]))
             self.rx = {"id": int(p[1]), "len": int(p[2]), "crc": int(p[3], 16), "data": bytearray(), "n": 0}
@@ -143,7 +155,7 @@ def test_find_reply_anywhere_in_line():
 
 def test_parse_stat_and_pick_port():
     s = tl.parse_stat("STAT up=10 link=NO_DEVICE fmt=- temp=41.5 tbrd=40 board=live bseq=12 scr=1 bage=3")
-    assert s == {"board": "live", "bseq": 12, "scr": 1, "bage": 3, "temp": 41.5, "orient": None}     # 방향 칸이 없는 펌웨어
+    assert s == {"board": "live", "bseq": 12, "scr": 1, "bage": 3, "temp": 41.5, "orient": None, "crashes": None}     # 방향 칸이 없는 펌웨어
     assert tl.parse_stat("MON BOOT video=1") is None
     assert tl.parse_stat("STAT up=1 link=STREAMING temp=40") is None            # 옛 펌웨어(현황판 꼬리 없음)
     assert tl.pick_port([Port("/dev/a", "X"), Port("/dev/b", "aa:bb:cc:00:00:02")], "AA:BB:CC:00:00:02") == "/dev/b"
@@ -531,3 +543,65 @@ def test_resend_after_reboot_skips_a_frame_of_the_old_orientation(tmp_path, monk
         assert len(port.frames) == 1                                             # 옛 가로 그림을 다시 보내지 않는다
     finally:
         link.stop()
+
+
+# ---- RL-D4 서 있는 탭5 (2026-11-03 — 되풀이 재시작 막기로 서서 그림마다 busy, 창은 30초마다 다시 연결만 했다) ----
+
+def test_a_halted_tab5_is_noticed_and_rebooted_once(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr(tl, "backoff", lambda n: 0.05)
+    port = FakePort(halted=True); logs = []; link = _link(tmp_path, port, logs)
+    link.offer(BIG, tl.mono()); link.start()
+    try:
+        assert _wait(lambda: port.reboots == 1, 5.0), logs
+        assert any("서 있다" in m and "reboot" in m for m in logs)
+        assert _wait(lambda: port.frames, 5.0)                            # 다시 켜진 뒤 그림을 받는다
+        assert _wait(lambda: any("풀렸다" in m for m in logs), 3.0)
+        state = lambda: json.loads((tmp_path / tl.STATE_FILE).read_text(encoding="utf-8"))
+        assert _wait(lambda: state()["halted"] is None, 3.0)                # 기록 줄 뒤에 곧바로 상태 파일을 쓴다(그 사이를 읽지 않게 기다린다)
+        assert port.reboots == 1
+    finally:
+        link.stop()
+
+
+def test_a_busy_tab5_that_is_not_halted_is_not_rebooted(tmp_path, monkeypatch):
+    monkeypatch.setattr(tl, "backoff", lambda n: 0.05)
+    port = FakePort(refuse_begin=True); logs = []; link = _link(tmp_path, port, logs)
+    link.offer(BIG, tl.mono()); link.start()
+    try:
+        assert _wait(lambda: port.begins >= tl.BUSY_PROBE + 2, 5.0)
+        assert port.boots >= 1                                             # 서 있는지 실제로 물었다
+        assert port.reboots == 0 and not any("서 있다" in m for m in logs)
+    finally:
+        link.stop()
+
+
+def test_a_tab5_that_halts_again_is_rebooted_at_most_once_per_gap(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr(tl, "backoff", lambda n: 0.05)
+    port = FakePort(halted=True); port.stays_halted = True; logs = []; link = _link(tmp_path, port, logs)
+    link.offer(BIG, tl.mono()); link.start()
+    try:
+        assert _wait(lambda: port.reboots == 1, 5.0)
+        assert _wait(lambda: port.begins >= 3 * tl.BUSY_PROBE + 2, 5.0)  # 그 뒤로도 여러 번 거절됐다
+        assert port.reboots == 1                                           # 간격(17분) 안에는 다시 보내지 않는다
+        st = json.loads((tmp_path / tl.STATE_FILE).read_text(encoding="utf-8"))
+        assert st["halted"] and st["halted"].startswith("halted:")        # doctor 가 알린다
+    finally:
+        link.stop()
+
+
+def test_a_tab5_that_stays_halted_is_rebooted_again_after_the_gap(tmp_path, monkeypatch):
+    monkeypatch.setattr(tl, "backoff", lambda n: 0.05)
+    monkeypatch.setattr(tl, "HALT_KICK_GAP", 0.5)
+    port = FakePort(halted=True); port.stays_halted = True; link = _link(tmp_path, port)
+    link.offer(BIG, tl.mono()); link.start()
+    try:
+        assert _wait(lambda: port.reboots >= 2, 8.0)                      # 간격이 지나면 또 한 번
+    finally:
+        link.stop()
+
+
+def test_stat_crashes_field():
+    assert tl.parse_stat("STAT up=1 board=live bseq=2 scr=1 bage=3 orient=1 crashes=4")["crashes"] == 4
+    assert tl.parse_stat("STAT up=1 board=live bseq=2 scr=1 bage=3 orient=1")["crashes"] is None    # 옛 펌웨어

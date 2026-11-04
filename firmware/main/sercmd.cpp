@@ -136,7 +136,19 @@ static void serial_cmd(const std::string &cmd)
     else if (cmd == "shot") g_req_shot.store(true);
     else if (cmd == "tasks") print_tasks();
     else if (cmd == "heap") print_heap();
-    else if (cmd == "boot") printf("BOOTINFO %s\n", boot_line());   // 부팅 줄을 다시(재부팅 직후의 MON BOOT 는 포트가 다시 붙기 전이면 못 받는다)
+    else if (cmd == "boot") {                                       // 부팅 줄을 다시(재부팅 직후의 MON BOOT 는 포트가 다시 붙기 전이면 못 받는다)
+        printf("BOOTINFO %s\n", boot_line());
+        // RL-D3 최근 부팅 기록 — 새것부터 "hw=하드웨어 까닭(16진) why=IDF 까닭 prev=그 전 실행 길이(0 3분 안 · 1 3분 · 2 30분 · 3 3시간 · 4 하루)"
+        const int total = cfg_get("hist_n", 0);
+        printf("BOOTHIST n=%d", total);
+        for (int k = 0; k < rec::HIST_N && k < total; ++k) {
+            char key[8];
+            snprintf(key, sizeof key, "h%d", (total - 1 - k) % rec::HIST_N);
+            const rec::HistEntry e = rec::hist_unpack(cfg_get(key, 0));
+            if (e.valid) printf(" [hw=0x%x why=%d prev=%d]", e.hw, e.why, e.prev_up);
+        }
+        printf("\n");
+    }
     else if (cmd == "cfg")                                           // 지금 설정(기기 시험이 시작할 때 적어 두고 끝나면 되돌린다 — 사전 검토 3a T-1)
         printf("CFG bri=%d orient=%d mono=%d range=%d osd=%d\n", g_bri.load(), g_orient.load(), (int)video::mono(), (int)video::full_range(), (int)g_osd.load());
     else if (sscanf(cmd.c_str(), "t %d %d", &a, &b) == 2) {          // 터치 넣기(시험용, 지금 방향의 화면 좌표)

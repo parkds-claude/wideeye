@@ -112,19 +112,54 @@ struct GiveUp {
 // 우리가 청한 재시작(guarded_restart)은 횟수를 세지만, 패닉은 IDF 가 곧장 재부팅한다 — 같은 입력이 같은 패닉을 내면 끝없이 되풀이된다
 // (2026-10-13 의 깨진 JPEG 이 그런 입력이었다). 부팅 때 "이번이 패닉·워치독 재시작인가"를 보고 센다:
 //   SAFE_AFTER 번 잇달아 → safe_mode(옛 판의 안전 모드 — 지금 펌웨어는 쓰지 않는다) · HALT_AFTER 번 잇달아 → 그리기를 시작하지 않고 안내를 띄운 채 선다.
-// 전원을 켠 부팅과 "현황판이 30분 이어짐"(board_session)이 횟수를 지운다. 시리얼 `reboot`(소프트 재시작)은 세지도 지우지도 않는다 — 선 뒤에
-// `reboot` 하면 한 번 더 해 본다.
+// 전원을 켠 부팅과 "켜진 뒤 3분 넘게 돈 실행"(RL-D1)이 횟수를 지운다. 시리얼 `reboot`(소프트 재시작)은 세지 않는다 — 선 뒤에 `reboot` 하면
+// 한 번 더 해 본다. 선 상태는 RETRY_MS 뒤 스스로 그 `reboot` 을 한다(RL-D2).
+// RL-D1(2026-11-03): 전에는 "현황판 LIVE 가 30분 이어짐"만 횟수를 지웠다. 맥북은 자주 잠기고 닫혀(SLEEP — LIVE 아님) 30분이 좀처럼 이어지지 않아,
+//   몇 시간 · 며칠 띄엄띄엄 난 워치독 리셋(맥북 덮개 닫기 · 다시 켜기 무렵 · 굽기 도구의 watchdog-reset)이 "잇달아"로 쌓여 4 를 넘자
+//   탭5 가 사람이 손댈 때까지 섰다. 되풀이 재시작은 "켜지자마자 다시 죽는 것"이다 — 그 전 실행이 ALIVE_MS 를 넘겼으면(prev_alive)
+//   이번 패닉은 잇달음의 첫 번째(1)로 센다. 비용: 3분보다 긴 주기로 되풀이되는 패닉은 서지 않고 계속 다시 켜진다(화면은 2초 끊기고 돌아온다 —
+//   영영 서는 것보다 낫다고 본다). 되돌리기: prev_alive 를 늘 false 로 넘긴다(옛 판과 같다).
 // fresh_start = 전원을 켠 부팅이다 → 우리가 청한 재시작의 횟수들(rst_stuck · rst_video · rst_panel)도 처음부터 센다.
 //   상한을 다 쓰면 화면이 "전원을 껐다 켜 주세요"라고 한다. 그렇게 했는데 횟수가 남아 있으면 다음 고장에서 스스로 재시작하지 못한다
 //   (2차 검토 I-5). 횟수는 "사람 없이 되풀이되는 재시작"을 막으려는 것이고, 전원은 사람이 켠다.
 struct CrashBoot { int32_t count; bool safe_mode; bool halt; bool fresh_start; };
 constexpr int32_t CRASH_SAFE_AFTER = 2, CRASH_HALT_AFTER = 4;
-inline CrashBoot crash_boot(int32_t stored, bool was_crash, bool power_on)
+constexpr int64_t CRASH_ALIVE_MS = 3 * 60000;          // RL-D1 이만큼 돈 실행은 "켜지자마자 죽음"이 아니다
+constexpr int64_t CRASH_RETRY_MS = 15 * 60000;         // RL-D2 선 뒤 이만큼 지나면 스스로 한 번 더 해 본다(소프트 재시작 — 세지 않는다)
+inline CrashBoot crash_boot(int32_t stored, bool was_crash, bool power_on, bool prev_alive = false)
 {
     int32_t n = stored < 0 ? 0 : stored;
-    if (was_crash) { if (n < 1000) ++n; }
-    else if (power_on) n = 0;
+    if (was_crash) { n = prev_alive ? 1 : (n < 1000 ? n + 1 : n); }
+    else if (power_on || prev_alive) n = 0;            // 전원을 켰거나, 그 전 실행이 3분 넘게 돌고 우리가 청해 다시 켰다
     return {n, n >= CRASH_SAFE_AFTER, was_crash && n >= CRASH_HALT_AFTER, power_on && !was_crash};
+}
+
+// RL-D3 실행이 얼마나 이어졌나 — 부팅 기록의 "그 전 실행" 칸. 0: 3분 안 · 1: 3분 · 2: 30분 · 3: 3시간 · 4: 하루(문턱마다 한 번 NVS 에 적는다)
+constexpr int64_t UP_MARK_MS[5] = {0, CRASH_ALIVE_MS, 30 * 60000LL, 3 * 3600000LL, 24 * 3600000LL};
+inline int up_mark(int64_t uptime_ms)
+{
+    int m = 0;
+    for (int i = 1; i < 5; ++i) if (uptime_ms >= UP_MARK_MS[i]) m = i;
+    return m;
+}
+// 부팅 기록 한 칸(NVS 정수 하나): 하드웨어 리셋 까닭(soc_reset_reason — 원래 번호) · IDF 까닭(esp_reset_reason) · 그 전 실행의 up_mark
+inline int32_t hist_pack(int hw, int why, int prev_up) { return (hw & 0xff) | ((why & 0xff) << 8) | ((prev_up & 0xf) << 16) | (1 << 20); }
+struct HistEntry { bool valid; int hw, why, prev_up; };
+inline HistEntry hist_unpack(int32_t v)
+{
+    if (!(v & (1 << 20))) return {false, 0, 0, 0};    // 빈 칸(0)과 가르는 표지
+    return {true, v & 0xff, (v >> 8) & 0xff, (v >> 16) & 0xf};
+}
+constexpr int HIST_N = 8;
+// 비정상 리셋인가 — IDF esp_reset_reason_t 의 번호(esp_system.h: PANIC 4 · INT_WDT 5 · TASK_WDT 6 · WDT 7 · CPU_LOCKUP 15). main.cpp 가 static_assert 로 맞춘다
+inline bool crash_reason(int why) { return why == 4 || why == 5 || why == 6 || why == 7 || why == 15; }
+// 부팅 기록 가운데 비정상 리셋 수 — STAT 의 crashes=. 3분보다 긴 주기로 되풀이되는 리셋은 RL-D1 로 서지 않으므로(독립 검토 2026-11-03)
+//   맥이 이 수를 보고 알린다(kiosk.sh doctor — 3 이상)
+inline int recent_crashes(const int32_t *hist, int n)
+{
+    int c = 0;
+    for (int i = 0; i < n; ++i) { const HistEntry e = hist_unpack(hist[i]); if (e.valid && crash_reason(e.why)) ++c; }
+    return c;
 }
 
 // ── 발열(MN-D18) ────────────────────────────────────────────────────────────

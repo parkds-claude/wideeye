@@ -48,8 +48,10 @@ int cfg_get_in(const char *key, int def, int lo, int hi)
 //   rst_panel 3  패널이 감지되지 않음(소프트 리셋 뒤 가끔 실패한다 — 메모리 tab5-arduino-pitfalls). 패널이 잡히면 지운다
 //   rst_video 3  부팅 때 꼭 있어야 하는 것을 못 만듦(디코더 · PPA · 버퍼 · RTOS 객체 · 태스크). 다 만들어지면 지운다
 //   rst_stuck 4  멈춤(파이프라인 · 세션 · panel · 주사).        현황판이 1분 이어지면 지운다(board_session)
-//   rst_panic    패닉 · 워치독으로 다시 켜진 횟수 — 우리가 청한 재시작이 아니라 부팅 때 센다(rec::crash_boot). 4번이면 선다.
-//                전원을 켠 부팅과 "현황판 30분"이 지운다
+//   rst_panic    패닉 · 워치독으로 다시 켜진 횟수 — 우리가 청한 재시작이 아니라 부팅 때 센다(rec::crash_boot). 켜지자마자 4번 잇달아면 서고
+//                15분 뒤 스스로 다시 해 본다(RL-D2). 전원을 켠 부팅과 "켜진 뒤 3분"(RL-D1 — board_session)이 지운다
+//   up_mark      이번 실행이 넘은 시간 문턱(1: 3분 · 2: 30분 · 3: 3시간 · 4: 하루) — 다음 부팅이 읽고 0 으로(RL-D1 · RL-D3)
+//   hist_n · h0~h7  부팅 기록(rec::hist_pack — 하드웨어 리셋 까닭 · IDF 까닭 · 그 전 실행 길이). 시리얼 `boot` 의 BOOTHIST(RL-D3)
 //   (앞 판의 rst_lost — HDMI 동글 쪽 — 는 2026-11-02 에 지웠다. 기기의 NVS 에 남아 있어도 읽지 않는다)
 RstSlot rst_slot(rec::Cause c)
 {

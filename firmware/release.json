@@ -1,10 +1,10 @@
 {
-  "version": "0.2.0",
-  "tag": "v0.2.0",
-  "file": "wideeye-tab5-v0.2.0.bin",
+  "version": "0.2.1",
+  "tag": "v0.2.1",
+  "file": "wideeye-tab5-v0.2.1.bin",
   "offset": "0x2000",
-  "size": 968544,
-  "sha256": "92f22213dfa9d9a7b61b163048aff805dd1a3847693a800841be6133a949e8f2",
+  "size": 969488,
+  "sha256": "808de024ddc5ab620836e20dd693dfe2339f273dc6b32fbceebd399e0bab9c60",
   "chip": "esp32p4",
   "chip_rev": [
     100,

@@ -35,8 +35,8 @@ PIN_FONT_URL='https://github.com/orioncactus/pretendard/releases/download/v1.3.9
 PIN_FONT_SHA256='04be351a74d6bf7d60c480a3087e51d185485d35a52023142af1df19eb8c428a'
 # WideEye 릴리스 묶음 — 릴리스 때 주소(GitHub 릴리스 파일 …/releases/download/<판>/wideeye-<판>.tar.gz — 결정 R12, GitHub 이 그때그때
 #   만드는 archive 묶음이 아니다)와 지문을 채운다. 비어 있으면 내려받지 않고 멈춘다(WIDEEYE_SOURCE 로만 깐다).
-PIN_APP_URL='https://github.com/parkds-claude/wideeye/releases/download/v0.2.0/wideeye-v0.2.0.tar.gz'
-PIN_APP_SHA256='ea6046cdff36e08f1e54fc3847ecb1e414b7c09822ece1546d7266f013763047'
+PIN_APP_URL='https://github.com/parkds-claude/wideeye/releases/download/v0.2.1/wideeye-v0.2.1.tar.gz'
+PIN_APP_SHA256='0c44982e022defc9e7c47459ea8d7d9e421e78909452812755b3903618f69fc7'
 # 휠이 없어 소스로 짓는 부품(지을 도구 setuptools 는 install/requirements-build.lock 의 지문으로 확인한다).
 PIN_SOURCE_BUILDS='pyaes,esptool'
 PIN_NEED_KB='1048576'
